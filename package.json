@@ -1,0 +1,42 @@
+{
+  "name": "speakez",
+  "version": "1.0.0",
+  "description": "Voice-to-text transcription with global hotkey activation",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "voice",
+    "transcription",
+    "whisper",
+    "hotkey"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "axios": "^1.6.0",
+    "electron-store": "^8.1.0",
+    "form-data": "^4.0.0",
+    "wav": "^1.0.2"
+  },
+  "build": {
+    "appId": "com.speakez.app",
+    "productName": "SpeakEz",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

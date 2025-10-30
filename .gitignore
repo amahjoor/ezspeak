@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+.env
+*.tmp
+temp_audio/
+.npm
+.electron-gyp
+
