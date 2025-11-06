@@ -3,15 +3,15 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   getApiKey: () => ipcRenderer.invoke('get-api-key'),
   setApiKey: (key) => ipcRenderer.invoke('set-api-key', key),
-  getMode: () => ipcRenderer.invoke('get-mode'),
-  setMode: (mode) => ipcRenderer.invoke('set-mode', mode),
+  getMicrophone: () => ipcRenderer.invoke('get-microphone'),
+  setMicrophone: (deviceId) => ipcRenderer.invoke('set-microphone', deviceId),
+  getHotkey: () => ipcRenderer.invoke('get-hotkey'),
+  setHotkey: (hotkey) => ipcRenderer.invoke('set-hotkey', hotkey),
   isConfigured: () => ipcRenderer.invoke('is-configured'),
   closeSettings: () => ipcRenderer.send('close-settings'),
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
   onStatusUpdate: (callback) => {
     ipcRenderer.on('status-update', (event, status) => callback(status));
-  },
-  removeAllListeners: (channel) => {
-    ipcRenderer.removeAllListeners(channel);
   },
   // Audio recording IPC
   sendAudioData: (buffer) => ipcRenderer.send('audio-recorded', buffer),
@@ -21,9 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onStopRecording: (callback) => {
     ipcRenderer.on('stop-recording', callback);
-  },
-  // Manual recording controls
-  manualRecordStart: () => ipcRenderer.send('manual-record-start'),
-  manualRecordStop: () => ipcRenderer.send('manual-record-stop')
+  }
 });
 

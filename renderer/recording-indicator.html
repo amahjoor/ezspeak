@@ -83,11 +83,44 @@
         <span class="duration" id="duration">0s</span>
     </div>
     <script>
-        let startTime = Date.now();
-        setInterval(() => {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('duration').textContent = elapsed + 's';
-        }, 100);
+        let startTime = null;
+        let timerInterval = null;
+        
+        function resetTimer() {
+            startTime = Date.now();
+            document.getElementById('duration').textContent = '0s';
+        }
+        
+        function startTimer() {
+            resetTimer();
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('duration').textContent = elapsed + 's';
+            }, 100);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        // Start timer when window becomes visible
+        window.addEventListener('focus', () => {
+            startTimer();
+        });
+        
+        // Stop timer when window is hidden
+        window.addEventListener('blur', () => {
+            stopTimer();
+        });
+        
+        // Initialize timer on load
+        startTimer();
     </script>
 </body>
 </html>

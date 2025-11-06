@@ -1,5 +1,6 @@
 const Config = require('./config');
 const Logger = require('./logger');
+const { uIOhook, UiohookKey } = require('uiohook-napi');
 
 class HotkeyManager {
   constructor(onRecordStart, onRecordStop, globalShortcut) {
@@ -8,14 +9,18 @@ class HotkeyManager {
     this.globalShortcut = globalShortcut;
     this.isRecording = false;
     this.lastKeyPressTime = 0;
-    this.keyPressDebounce = 300; // 300ms debounce for toggle mode
+    this.keyPressDebounce = 200; // 200ms debounce
+    this.holdDetectionTime = 1000; // 1 second to detect hold mode
+    this.keyDownTime = null;
     this.holdModeTimer = null;
     this.isMonitoring = false;
     this.registeredHotkey = null;
+    this.uiohookStarted = false;
+    this.isHoldMode = false; // Track if current recording is in hold mode
   }
 
   /**
-   * Start monitoring for hotkey
+   * Start monitoring for hotkey (smart mode: both toggle and hold)
    */
   async startMonitoring() {
     if (this.isMonitoring) {
@@ -24,92 +29,128 @@ class HotkeyManager {
     }
 
     this.isMonitoring = true;
-    Logger.log('Starting hotkey monitoring...');
+    Logger.log('Starting smart hotkey monitoring...');
     
-    // Check if globalShortcut is available
-    if (!this.globalShortcut) {
-      Logger.error('CRITICAL: globalShortcut not available!');
-      return;
-    }
-    
-    Logger.log('globalShortcut API available:', !!this.globalShortcut);
-    
-    // Try multiple hotkeys in order of preference
-    const hotkeys = ['F9', 'F8', 'F7', 'F6', 'CommandOrControl+Shift+R'];
-    let registered = false;
-    
-    for (const hotkey of hotkeys) {
-      try {
-        Logger.debug(`Attempting to register hotkey: ${hotkey}`);
-        const success = this.globalShortcut.register(hotkey, () => {
-          Logger.debug(`Hotkey ${hotkey} pressed!`);
-          this.handleHotkeyPress();
-        });
-        
-        if (success) {
-          Logger.success(`Hotkey registered: ${hotkey}`);
-          console.log(`\n🎯 Press ${hotkey} to start/stop recording!\n`);
-          registered = true;
-          this.registeredHotkey = hotkey;
-          break;
-        } else {
-          Logger.warn(`Failed to register ${hotkey}, trying next...`);
-        }
-      } catch (error) {
-        Logger.error(`Error registering ${hotkey}:`, error.message);
+    try {
+      // Get saved hotkey from config
+      const Config = require('./config');
+      const hotkeyName = Config.getHotkey();
+      const HOTKEY = UiohookKey[hotkeyName];
+      
+      if (!HOTKEY) {
+        Logger.error(`Invalid hotkey: ${hotkeyName}`);
+        return;
       }
-    }
-    
-    if (!registered) {
-      Logger.error('CRITICAL: Could not register ANY hotkey! The app may not work.');
-      Logger.error('Try closing other apps that might use these keys.');
+      
+      uIOhook.on('keydown', (e) => {
+        if (e.keycode === HOTKEY) {
+          this.handleKeyDown();
+        }
+      });
+      
+      uIOhook.on('keyup', (e) => {
+        if (e.keycode === HOTKEY) {
+          this.handleKeyUp();
+        }
+      });
+      
+      uIOhook.start();
+      this.uiohookStarted = true;
+      Logger.success(`Hotkey registered: ${hotkeyName} (smart mode)`);
+      console.log(`\n>> Press ${hotkeyName} to toggle, or hold to record!\n`);
+      
+    } catch (error) {
+      Logger.error('Error starting uiohook:', error.message);
+      Logger.error('Smart mode requires uiohook to work properly');
     }
   }
 
   /**
-   * Handle hotkey press
+   * Handle key down - start timer and potentially start recording
    */
-  async handleHotkeyPress() {
-    Logger.debug('Hotkey press detected');
-    const mode = Config.getMode();
+  async handleKeyDown() {
     const now = Date.now();
     
-    // Debounce
-    if (now - this.lastKeyPressTime < this.keyPressDebounce) {
-      Logger.debug('Debounced - too soon after last press');
+    // Debounce to prevent key repeat (silent - no spam)
+    if (this.keyDownTime && now - this.keyDownTime < this.keyPressDebounce) {
       return;
     }
-    this.lastKeyPressTime = now;
-
-    Logger.log(`Mode: ${mode}, Currently recording: ${this.isRecording}`);
-
-    if (mode === 'toggle') {
-      // Toggle mode: start on press, stop on next press
-      if (!this.isRecording) {
-        Logger.recording('Starting recording (toggle mode)');
+    
+    this.keyDownTime = now;
+    
+    // If already recording in toggle mode, mark for stopping on key up
+    if (this.isRecording && !this.isHoldMode) {
+      // Don't start a new timer, just let keyUp handle the stop
+      return;
+    }
+    
+    // If not recording, start timer to detect hold mode
+    if (!this.isRecording) {
+      this.holdModeTimer = setTimeout(async () => {
+        // User held for 1 second, enter hold mode
+        Logger.log('Hold mode activated, starting recording');
+        this.isHoldMode = true;
         this.isRecording = true;
         if (this.onRecordStart) {
           await this.onRecordStart();
         }
-      } else {
-        Logger.recording('Stopping recording (toggle mode)');
-        this.isRecording = false;
-        if (this.onRecordStop) {
-          await this.onRecordStop();
-        }
+      }, this.holdDetectionTime);
+    }
+  }
+
+  /**
+   * Handle key up - determine if toggle or hold mode
+   */
+  async handleKeyUp() {
+    if (!this.keyDownTime) {
+      return;
+    }
+    
+    const now = Date.now();
+    const pressDuration = now - this.keyDownTime;
+    this.keyDownTime = null;
+    
+    // Clear the hold detection timer
+    if (this.holdModeTimer) {
+      clearTimeout(this.holdModeTimer);
+      this.holdModeTimer = null;
+    }
+    
+    // If in hold mode and recording, stop
+    if (this.isHoldMode && this.isRecording) {
+      Logger.log(`Hold mode: Stopping (${(pressDuration/1000).toFixed(1)}s)`);
+      this.isHoldMode = false;
+      this.isRecording = false;
+      if (this.onRecordStop) {
+        await this.onRecordStop();
       }
-    } else {
-      // Hold mode: not properly supported with globalShortcut
-      // Just do toggle for now
+      return;
+    }
+    
+    // If already recording in toggle mode, stop it
+    if (this.isRecording && !this.isHoldMode) {
+      Logger.log('Toggle: Stopping recording');
+      this.isRecording = false;
+      if (this.onRecordStop) {
+        await this.onRecordStop();
+      }
+      return;
+    }
+    
+    // Quick press (< 1 second) = toggle mode start
+    if (pressDuration < this.holdDetectionTime) {
+      // Debounce check
+      if (now - this.lastKeyPressTime < this.keyPressDebounce) {
+        return;
+      }
+      this.lastKeyPressTime = now;
+      
       if (!this.isRecording) {
+        Logger.log('Toggle: Starting recording');
         this.isRecording = true;
+        this.isHoldMode = false;
         if (this.onRecordStart) {
           await this.onRecordStart();
-        }
-      } else {
-        this.isRecording = false;
-        if (this.onRecordStop) {
-          await this.onRecordStop();
         }
       }
     }
@@ -124,6 +165,17 @@ class HotkeyManager {
     if (this.holdModeTimer) {
       clearTimeout(this.holdModeTimer);
       this.holdModeTimer = null;
+    }
+    
+    // Stop uiohook if it was started
+    if (this.uiohookStarted) {
+      try {
+        uIOhook.stop();
+        this.uiohookStarted = false;
+        Logger.log('uiohook stopped');
+      } catch (error) {
+        Logger.error('Error stopping uiohook:', error);
+      }
     }
     
     // Unregister all shortcuts

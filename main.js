@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme } = require('electron');
 const path = require('path');
 const HotkeyManager = require('./src/hotkeyManager');
 const AudioRecorder = require('./src/audioRecorder');
@@ -84,10 +84,6 @@ function updateTrayMenu() {
         showSettingsWindow();
       }
     },
-    {
-      label: `Mode: ${Config.getMode() === 'toggle' ? 'Toggle' : 'Hold'}`,
-      enabled: false
-    },
     { type: 'separator' },
     {
       label: 'Quit',
@@ -104,15 +100,18 @@ function updateTrayMenu() {
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 400,
-    resizable: false,
+    height: 450,
+    resizable: true,
+    minWidth: 500,
+    maxWidth: 500,
+    minHeight: 400,
+    frame: false, // Remove default frame for custom title bar
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
     },
-    autoHideMenuBar: true,
-    title: 'SpeakEz Settings'
+    backgroundColor: '#1e1e1e'
   });
 
   settingsWindow.loadFile('renderer/settings.html');
@@ -249,18 +248,34 @@ ipcMain.handle('set-api-key', (event, key) => {
   return true;
 });
 
-ipcMain.handle('get-mode', () => {
-  return Config.getMode();
+ipcMain.handle('is-configured', () => {
+  return Config.isConfigured();
 });
 
-ipcMain.handle('set-mode', (event, mode) => {
-  Config.setMode(mode);
-  updateTrayMenu();
+ipcMain.handle('get-microphone', () => {
+  return Config.getMicrophoneDeviceId();
+});
+
+ipcMain.handle('set-microphone', (event, deviceId) => {
+  Config.setMicrophoneDeviceId(deviceId);
   return true;
 });
 
-ipcMain.handle('is-configured', () => {
-  return Config.isConfigured();
+ipcMain.handle('get-hotkey', () => {
+  return Config.getHotkey();
+});
+
+ipcMain.handle('set-hotkey', async (event, hotkey) => {
+  Config.setHotkey(hotkey);
+  
+  // Restart hotkey monitoring with new key
+  if (hotkeyManager) {
+    Logger.log(`Changing hotkey to ${hotkey}, restarting monitoring...`);
+    hotkeyManager.stopMonitoring();
+    await hotkeyManager.startMonitoring();
+  }
+  
+  return true;
 });
 
 ipcMain.on('close-settings', () => {
@@ -269,19 +284,18 @@ ipcMain.on('close-settings', () => {
   }
 });
 
-ipcMain.on('manual-record-start', async () => {
-  Logger.log('📍 Manual recording start requested from UI');
-  await handleRecordStart();
-});
-
-ipcMain.on('manual-record-stop', async () => {
-  Logger.log('📍 Manual recording stop requested from UI');
-  await handleRecordStop();
+ipcMain.on('minimize-window', () => {
+  if (settingsWindow) {
+    settingsWindow.minimize();
+  }
 });
 
 // App lifecycle
 app.whenReady().then(async () => {
   Logger.log('App ready, initializing...');
+  
+  // Force dark mode for window chrome
+  nativeTheme.themeSource = 'dark';
   
   createTray();
   Logger.success('System tray created');
@@ -299,7 +313,9 @@ app.whenReady().then(async () => {
   showSettingsWindow();
   Logger.success('Settings window shown');
   
-  Logger.log('\n✨ SpeakEz is ready!\n');
+  console.log('\n========================================');
+  console.log('   SpeakEz is ready!');
+  console.log('========================================\n');
 });
 
 app.on('window-all-closed', (event) => {

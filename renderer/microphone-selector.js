@@ -2,8 +2,6 @@
 
 async function loadMicrophones() {
     try {
-        console.log('🔍 Loading available microphones...');
-        
         // Request permission first
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(track => track.stop());
@@ -12,36 +10,37 @@ async function loadMicrophones() {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter(d => d.kind === 'audioinput');
         
-        console.log(`Found ${audioInputs.length} microphones`);
-        
         const micSelect = document.getElementById('microphone');
         if (!micSelect) return;
+        
+        // Get saved microphone or current selection
+        let savedMic = null;
+        try {
+            savedMic = await window.electronAPI.getMicrophone();
+        } catch (e) {
+            savedMic = micSelect.value;
+        }
         
         // Clear existing options
         micSelect.innerHTML = '';
         
-        // Add microphones
-        audioInputs.forEach(device => {
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'default';
+        defaultOption.textContent = 'System Default Microphone';
+        micSelect.appendChild(defaultOption);
+        
+        // Add other microphones
+        audioInputs.forEach((device, index) => {
             const option = document.createElement('option');
             option.value = device.deviceId;
-            option.textContent = device.label || `Microphone ${audioInputs.indexOf(device) + 1}`;
-            
-            // Highlight the Yeti if found
-            if (device.label && device.label.toLowerCase().includes('yeti')) {
-                option.textContent += ' ⭐ (Recommended)';
-            }
-            
+            option.textContent = device.label || `Microphone ${index + 1}`;
             micSelect.appendChild(option);
         });
         
-        // Try to select Yeti by default if available
-        const yetiOption = Array.from(micSelect.options).find(opt => 
-            opt.textContent.toLowerCase().includes('yeti')
-        );
-        
-        if (yetiOption) {
-            micSelect.value = yetiOption.value;
-            console.log('✨ Auto-selected Yeti Classic microphone');
+        // Restore saved selection if it still exists
+        if (savedMic && Array.from(micSelect.options).some(opt => opt.value === savedMic)) {
+            micSelect.value = savedMic;
         }
         
     } catch (error) {
@@ -56,11 +55,22 @@ if (document.readyState === 'loading') {
     loadMicrophones();
 }
 
-// Refresh button
+// Setup auto-refresh on dropdown interaction and device changes
 document.addEventListener('DOMContentLoaded', () => {
-    const refreshBtn = document.getElementById('refreshMics');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', loadMicrophones);
+    const micSelect = document.getElementById('microphone');
+    
+    if (micSelect) {
+        // Refresh when user clicks/focuses the dropdown
+        micSelect.addEventListener('focus', loadMicrophones);
+        micSelect.addEventListener('click', loadMicrophones);
+        
+        // Auto-refresh when devices are plugged/unplugged
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', () => {
+                console.log('Device change detected, refreshing microphones...');
+                loadMicrophones();
+            });
+        }
     }
 });
 

@@ -5,6 +5,8 @@ const store = new Store({
   defaults: {
     apiKey: '',
     mode: 'toggle', // 'toggle' or 'hold'
+    microphoneDeviceId: 'default',
+    hotkey: 'CtrlRight', // Default to Right Control
     sampleRate: 16000,
     channels: 1,
     bitDepth: 16
@@ -28,6 +30,22 @@ class Config {
     if (mode === 'toggle' || mode === 'hold') {
       store.set('mode', mode);
     }
+  }
+
+  static getMicrophoneDeviceId() {
+    return store.get('microphoneDeviceId', 'default');
+  }
+
+  static setMicrophoneDeviceId(deviceId) {
+    store.set('microphoneDeviceId', deviceId);
+  }
+
+  static getHotkey() {
+    return store.get('hotkey', 'CtrlRight');
+  }
+
+  static setHotkey(hotkey) {
+    store.set('hotkey', hotkey);
   }
 
   static getAudioSettings() {
