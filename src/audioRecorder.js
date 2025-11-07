@@ -38,8 +38,8 @@ class AudioRecorder {
           
           // Warn if file is very small
           if (buffer.length < 5000) {
-            Logger.warn(`⚠️ Audio file is very small (${fileSizeKB} KB) - recording might be too short!`);
-            Logger.warn('💡 Try speaking for at least 2-3 seconds for better transcription');
+            Logger.warn(`Audio file is very small (${fileSizeKB} KB) - recording might be too short!`);
+            Logger.warn('Try speaking for at least 2-3 seconds for better transcription');
           }
           
           fs.writeFileSync(this.tempFilePath, buffer);
@@ -94,7 +94,7 @@ class AudioRecorder {
       throw new Error('Recording already in progress');
     }
 
-    const tempDir = path.join(os.tmpdir(), 'speakez');
+    const tempDir = path.join(os.tmpdir(), 'easyspeak');
     if (!fs.existsSync(tempDir)) {
       Logger.log('Creating temp directory:', tempDir);
       fs.mkdirSync(tempDir, { recursive: true });
@@ -104,7 +104,7 @@ class AudioRecorder {
     this.isRecording = true;
     this.recordingStartTime = Date.now(); // Track when recording started
     Logger.log('Temp file path:', this.tempFilePath);
-    Logger.log('⏱️ Recording started at:', new Date(this.recordingStartTime).toLocaleTimeString());
+    Logger.log('Recording started at:', new Date(this.recordingStartTime).toLocaleTimeString());
 
     return new Promise((resolve, reject) => {
       this.resolveStart = resolve;

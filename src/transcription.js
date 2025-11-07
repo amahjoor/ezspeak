@@ -19,7 +19,7 @@ class TranscriptionService {
   async transcribe(audioFilePath) {
     const apiKey = Config.getApiKey();
     
-    Logger.log('🔑 Checking API key...');
+    Logger.log('Checking API key...');
     if (!apiKey) {
       Logger.error('No API key configured');
       throw new Error('OpenAI API key not configured');
@@ -32,7 +32,7 @@ class TranscriptionService {
     }
     
     const stats = fs.statSync(audioFilePath);
-    Logger.log(`📁 Audio file: ${path.basename(audioFilePath)}, Size: ${(stats.size / 1024).toFixed(2)} KB`);
+    Logger.log(`Audio file: ${path.basename(audioFilePath)}, Size: ${(stats.size / 1024).toFixed(2)} KB`);
 
     try {
       const formData = new FormData();
@@ -43,7 +43,7 @@ class TranscriptionService {
                        fileExtension === '.m4a' ? 'audio/m4a' :
                        'audio/webm'; // default to webm
       
-      Logger.log(`📤 Preparing to upload: ${fileExtension} file (${mimeType})`);
+      Logger.log(`Preparing to upload: ${fileExtension} file (${mimeType})`);
       
       formData.append('file', fs.createReadStream(audioFilePath), {
         filename: path.basename(audioFilePath),
@@ -53,8 +53,8 @@ class TranscriptionService {
       formData.append('language', 'en');
       formData.append('response_format', 'text');
 
-      Logger.log('🌐 Sending request to OpenAI Whisper API...');
-      Logger.log('📍 API URL:', this.apiUrl);
+      Logger.log('Sending request to OpenAI Whisper API...');
+      Logger.log('API URL:', this.apiUrl);
       
       const response = await axios.post(this.apiUrl, formData, {
         headers: {
@@ -64,23 +64,23 @@ class TranscriptionService {
         timeout: 30000 // 30 second timeout
       });
       
-      Logger.success('✅ Received response from OpenAI');
-      Logger.log('📥 Response status:', response.status);
-      Logger.log('📝 Response data type:', typeof response.data);
-      Logger.log('📝 Response data length:', response.data?.length || 0);
-      Logger.log('📝 RAW Response data:', JSON.stringify(response.data).substring(0, 200));
+      Logger.success('Received response from OpenAI');
+      Logger.log('Response status:', response.status);
+      Logger.log('Response data type:', typeof response.data);
+      Logger.log('Response data length:', response.data?.length || 0);
+      Logger.log('RAW Response data:', JSON.stringify(response.data).substring(0, 200));
       
       const transcribedText = typeof response.data === 'string' 
         ? response.data.trim() 
         : String(response.data).trim();
       
-      Logger.transcription('🎯 ACTUAL TRANSCRIPTION TEXT:', `"${transcribedText}"`);
-      Logger.log('📏 Transcription length:', transcribedText.length, 'characters');
+      Logger.transcription('ACTUAL TRANSCRIPTION TEXT:', `"${transcribedText}"`);
+      Logger.log('Transcription length:', transcribedText.length, 'characters');
 
       // Clean up audio file after transcription
       try {
         fs.unlinkSync(audioFilePath);
-        Logger.log('🗑️ Temp audio file deleted');
+        Logger.log('Temp audio file deleted');
       } catch (error) {
         Logger.warn('Error deleting temp audio file:', error.message);
       }
@@ -122,7 +122,7 @@ class TranscriptionService {
    */
   async transcribeBuffer(audioBuffer) {
     const os = require('os');
-    const tempDir = path.join(os.tmpdir(), 'speakez');
+    const tempDir = path.join(os.tmpdir(), 'easyspeak');
     
     // Ensure temp directory exists
     if (!fs.existsSync(tempDir)) {

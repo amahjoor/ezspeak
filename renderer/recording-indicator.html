@@ -109,18 +109,14 @@
             }
         }
         
-        // Start timer when window becomes visible
-        window.addEventListener('focus', () => {
-            startTimer();
+        // Listen for visibility changes to start/stop timer
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
         });
-        
-        // Stop timer when window is hidden
-        window.addEventListener('blur', () => {
-            stopTimer();
-        });
-        
-        // Initialize timer on load
-        startTimer();
     </script>
 </body>
 </html>

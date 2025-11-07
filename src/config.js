@@ -1,7 +1,7 @@
 const Store = require('electron-store');
 
 const store = new Store({
-  name: 'speakez-config',
+  name: 'easyspeak-config',
   defaults: {
     apiKey: '',
     mode: 'toggle', // 'toggle' or 'hold'

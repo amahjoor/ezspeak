@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isConfigured: () => ipcRenderer.invoke('is-configured'),
   closeSettings: () => ipcRenderer.send('close-settings'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  openExternal: (url) => ipcRenderer.send('open-external', url),
   onStatusUpdate: (callback) => {
     ipcRenderer.on('status-update', (event, status) => callback(status));
   },

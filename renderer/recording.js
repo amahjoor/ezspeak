@@ -30,7 +30,26 @@ async function startRecording() {
     };
     
     audioStream = await navigator.mediaDevices.getUserMedia(constraints);
-    mediaRecorder = new MediaRecorder(audioStream);
+    
+    // Try different MIME types in order of preference
+    let mimeType = '';
+    const mimeTypes = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus'
+    ];
+    
+    for (const type of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        mimeType = type;
+        console.log('Using MIME type:', type);
+        break;
+      }
+    }
+    
+    mediaRecorder = new MediaRecorder(audioStream, {
+      mimeType: mimeType || undefined
+    });
     
     mediaRecorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
@@ -40,7 +59,8 @@ async function startRecording() {
 
     mediaRecorder.onstop = async () => {
       try {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        // Use the same MIME type that was used for recording
+        const audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
         const arrayBuffer = await audioBlob.arrayBuffer();
         const buffer = Array.from(new Uint8Array(arrayBuffer));
         

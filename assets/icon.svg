@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#82e657" rx="64"/>
+  
+  <!-- Text: easyspeak -->
+  <text x="256" y="256" font-family="Helvetica, Arial, sans-serif" font-size="94" font-weight="700" fill="#c7ff7f" text-anchor="middle" letter-spacing="-7" dominant-baseline="middle">easyspeak</text>
+</svg>
+

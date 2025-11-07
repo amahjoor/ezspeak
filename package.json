@@ -1,5 +1,5 @@
 {
-  "name": "speakez",
+  "name": "easyspeak",
   "version": "1.0.0",
   "description": "Voice-to-text transcription with global hotkey activation",
   "main": "main.js",
@@ -14,7 +14,7 @@
     "whisper",
     "hotkey"
   ],
-  "author": "",
+  "author": "Arman Mahjoor",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.0",
@@ -29,11 +29,13 @@
     "wav": "^1.0.2"
   },
   "build": {
-    "appId": "com.speakez.app",
-    "productName": "SpeakEz",
+    "appId": "com.easyspeak.app",
+    "productName": "easyspeak",
+    "forceCodeSigning": false,
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "publisherName": "Arman Mahjoor"
     },
     "nsis": {
       "oneClick": false,

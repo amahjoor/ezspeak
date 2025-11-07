@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
 const path = require('path');
 const HotkeyManager = require('./src/hotkeyManager');
 const AudioRecorder = require('./src/audioRecorder');
@@ -48,10 +48,14 @@ function createRecordingIndicator() {
 function showRecordingIndicator() {
   if (recordingIndicator && !recordingIndicator.isDestroyed()) {
     recordingIndicator.show();
+    // Trigger timer reset by sending a message to reload the page
+    recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
   } else {
     createRecordingIndicator();
     recordingIndicator.once('ready-to-show', () => {
       recordingIndicator.show();
+      // Trigger timer start after window is shown
+      recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
     });
   }
 }
@@ -63,7 +67,8 @@ function hideRecordingIndicator() {
 }
 
 function createTray() {
-  const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+  const iconPath = path.join(__dirname, 'assets', 'icon.ico');
+  const icon = nativeImage.createFromPath(iconPath);
   tray = new Tray(icon);
   updateTrayMenu();
   tray.on('double-click', () => {
@@ -94,17 +99,14 @@ function updateTrayMenu() {
   ]);
   
   tray.setContextMenu(contextMenu);
-  tray.setToolTip('SpeakEz - Voice to Text');
+  tray.setToolTip('easyspeak - Voice to Text');
 }
 
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 500,
     height: 450,
-    resizable: true,
-    minWidth: 500,
-    maxWidth: 500,
-    minHeight: 400,
+    resizable: false,
     frame: false, // Remove default frame for custom title bar
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -119,7 +121,7 @@ function createSettingsWindow() {
   // Open DevTools only in dev mode
   if (process.argv.includes('--dev')) {
     settingsWindow.webContents.openDevTools({ mode: 'detach' });
-    Logger.log('💻 DevTools opened (dev mode)');
+    Logger.log('DevTools opened (dev mode)');
   }
 
   settingsWindow.on('closed', () => {
@@ -202,7 +204,7 @@ async function handleRecordStop() {
     // Check file size
     const stats = require('fs').statSync(audioFilePath);
     const fileSizeKB = (stats.size / 1024).toFixed(2);
-    Logger.log(`📊 Audio file size: ${fileSizeKB} KB`);
+    Logger.log(`Audio file size: ${fileSizeKB} KB`);
 
     if (!audioFilePath || !require('fs').existsSync(audioFilePath)) {
       throw new Error('Audio file was not created');
@@ -290,6 +292,10 @@ ipcMain.on('minimize-window', () => {
   }
 });
 
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
+});
+
 // App lifecycle
 app.whenReady().then(async () => {
   Logger.log('App ready, initializing...');
@@ -314,7 +320,7 @@ app.whenReady().then(async () => {
   Logger.success('Settings window shown');
   
   console.log('\n========================================');
-  console.log('   SpeakEz is ready!');
+  console.log('   easyspeak is ready!');
   console.log('========================================\n');
 });
 

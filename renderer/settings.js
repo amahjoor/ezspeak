@@ -45,10 +45,6 @@ async function loadSettings() {
         if (hotkeyInput) {
             hotkeyInput.value = displayName;
         }
-        
-        if (subtitle) {
-            subtitle.textContent = `Press ${displayName} to toggle, or hold to record`;
-        }
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -190,12 +186,6 @@ function setupHotkeyCapture() {
                 const displayName = keyDisplayNames[uiohookKey] || uiohookKey;
                 hotkeyInput.value = displayName;
                 
-                // Update subtitle
-                const subtitle = document.getElementById('subtitle');
-                if (subtitle) {
-                    subtitle.textContent = `Press ${displayName} to toggle, or hold to record`;
-                }
-                
                 showToast('Hotkey changed');
             } catch (error) {
                 console.error('Error setting hotkey:', error);
@@ -272,5 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     setupTooltip();
+    
+    // Make external links open in default browser
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A' && e.target.href) {
+            e.preventDefault();
+            window.electronAPI.openExternal(e.target.href);
+        }
+    });
 });
 
