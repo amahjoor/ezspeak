@@ -99,7 +99,7 @@ function updateTrayMenu() {
   ]);
   
   tray.setContextMenu(contextMenu);
-  tray.setToolTip('easyspeak - Voice to Text');
+  tray.setToolTip('ezspeak - Voice to Text');
 }
 
 function createSettingsWindow() {

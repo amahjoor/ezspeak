@@ -1,4 +1,4 @@
-# easyspeak
+# ezspeak
 
 Voice-to-text transcription using OpenAI Whisper API. Press a button, speak, and text appears.
 

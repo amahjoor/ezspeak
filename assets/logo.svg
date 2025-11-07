@@ -2,7 +2,7 @@
   <!-- Background -->
   <rect width="1000" height="1000" fill="#82e657"/>
   
-  <!-- Text: easyspeak -->
-  <text x="500" y="500" font-family="Helvetica, Arial, sans-serif" font-size="207" font-weight="700" fill="#c7ff7f" text-anchor="middle" letter-spacing="-14" dominant-baseline="middle">easyspeak</text>
+  <!-- Text: ezspeak -->
+  <text x="500" y="500" font-family="Helvetica, Arial, sans-serif" font-size="207" font-weight="700" fill="#c7ff7f" text-anchor="middle" letter-spacing="-14" dominant-baseline="middle">ezspeak</text>
 </svg>
 

@@ -1,5 +1,5 @@
 {
-  "name": "easyspeak",
+  "name": "ezspeak",
   "version": "1.0.0",
   "description": "Voice-to-text transcription with global hotkey activation",
   "main": "main.js",
@@ -29,8 +29,8 @@
     "wav": "^1.0.2"
   },
   "build": {
-    "appId": "com.easyspeak.app",
-    "productName": "easyspeak",
+    "appId": "com.ezspeak.app",
+    "productName": "ezspeak",
     "forceCodeSigning": false,
     "win": {
       "target": "nsis",
