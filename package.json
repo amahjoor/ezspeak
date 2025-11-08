@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "setup": "node scripts/download-whisper.js",
+    "prebuild": "node scripts/download-whisper.js"
   },
   "keywords": [
     "voice",
@@ -32,6 +34,17 @@
     "appId": "com.ezspeak.app",
     "productName": "ezspeak",
     "forceCodeSigning": false,
+    "files": [
+      "**/*",
+      "bin/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "bin",
+        "to": "bin",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico",

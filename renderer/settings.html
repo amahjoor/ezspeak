@@ -31,6 +31,17 @@
 
         <div class="settings-section">
             <div class="form-group">
+                <label for="transcriptionMode">Transcription Mode</label>
+                <select id="transcriptionMode">
+                    <option value="cloud">Cloud (OpenAI API)</option>
+                    <option value="local">Local (Offline & Private)</option>
+                </select>
+                <p class="help-text" style="color: #858585; font-size: 12px; margin-top: 6px;">
+                    Local mode runs on your device for complete privacy
+                </p>
+            </div>
+
+            <div class="form-group" id="apiKeyGroup">
                 <div class="label-with-info">
                     <label for="apiKey">OpenAI API Key</label>
                     <span class="info-icon" id="apiKeyInfo">
@@ -63,6 +74,20 @@
                         </svg>
                     </button>
                 </div>
+            </div>
+
+            <div class="form-group" id="whisperModelGroup" style="display: none;">
+                <label for="whisperModel">Whisper Model</label>
+                <select id="whisperModel">
+                    <option value="tiny">Tiny (Fast, ~75MB)</option>
+                    <option value="base">Base (Balanced, ~142MB)</option>
+                    <option value="small">Small (Better, ~466MB)</option>
+                    <option value="medium">Medium (Best, ~1.5GB)</option>
+                </select>
+                <p class="help-text" style="color: #858585; font-size: 12px; margin-top: 6px;">
+                    <span id="modelStatus">Checking model...</span>
+                    <button type="button" id="downloadModelBtn" class="download-btn" style="display: none; margin-left: 8px;">Download Model</button>
+                </p>
             </div>
 
             <div class="form-group">

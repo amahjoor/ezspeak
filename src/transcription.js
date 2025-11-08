@@ -4,27 +4,24 @@ const fs = require('fs');
 const path = require('path');
 const Config = require('./config');
 const Logger = require('./logger');
+const LocalTranscriptionService = require('./localTranscription');
 
 class TranscriptionService {
   constructor() {
     this.apiUrl = 'https://api.openai.com/v1/audio/transcriptions';
+    this.localService = new LocalTranscriptionService();
     Logger.log('TranscriptionService initialized, API URL:', this.apiUrl);
   }
 
   /**
-   * Transcribe audio file using OpenAI Whisper API
+   * Transcribe audio file using OpenAI Whisper API or local model
    * @param {string} audioFilePath - Path to the audio file
    * @returns {Promise<string>} - Transcribed text
    */
   async transcribe(audioFilePath) {
-    const apiKey = Config.getApiKey();
+    const transcriptionMode = Config.getTranscriptionMode();
     
-    Logger.log('Checking API key...');
-    if (!apiKey) {
-      Logger.error('No API key configured');
-      throw new Error('OpenAI API key not configured');
-    }
-    Logger.success('API key found (starts with: ' + apiKey.substring(0, 10) + '...)');
+    Logger.log('Transcription mode:', transcriptionMode);
 
     if (!fs.existsSync(audioFilePath)) {
       Logger.error('Audio file not found:', audioFilePath);
@@ -33,6 +30,50 @@ class TranscriptionService {
     
     const stats = fs.statSync(audioFilePath);
     Logger.log(`Audio file: ${path.basename(audioFilePath)}, Size: ${(stats.size / 1024).toFixed(2)} KB`);
+
+    // Route to appropriate transcription service
+    if (transcriptionMode === 'local') {
+      return await this.transcribeLocal(audioFilePath);
+    } else {
+      return await this.transcribeCloud(audioFilePath);
+    }
+  }
+
+  /**
+   * Transcribe using local Whisper model
+   * @param {string} audioFilePath - Path to the audio file
+   * @returns {Promise<string>} - Transcribed text
+   */
+  async transcribeLocal(audioFilePath) {
+    try {
+      const model = Config.getWhisperModel();
+      Logger.log('Using local transcription with model:', model);
+      
+      const transcribedText = await this.localService.transcribe(audioFilePath, model);
+      return transcribedText;
+    } catch (error) {
+      Logger.error('Local transcription error:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Transcribe using OpenAI Whisper API (cloud)
+   * @param {string} audioFilePath - Path to the audio file
+   * @returns {Promise<string>} - Transcribed text
+   */
+  async transcribeCloud(audioFilePath) {
+    const apiKey = Config.getApiKey();
+    
+    Logger.log('Checking API key...');
+    if (!apiKey) {
+      Logger.error('No API key configured');
+      throw new Error('OpenAI API key not configured');
+    }
+    Logger.success('API key found (starts with: ' + apiKey.substring(0, 10) + '...)');
+    
+    const stats = fs.statSync(audioFilePath);
+    Logger.log(`Using cloud transcription, file size: ${(stats.size / 1024).toFixed(2)} KB`);
 
     try {
       const formData = new FormData();

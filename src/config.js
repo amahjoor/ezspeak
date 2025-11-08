@@ -9,7 +9,9 @@ const store = new Store({
     hotkey: 'CtrlRight', // Default to Right Control
     sampleRate: 16000,
     channels: 1,
-    bitDepth: 16
+    bitDepth: 16,
+    transcriptionMode: 'cloud', // 'cloud' or 'local'
+    whisperModel: 'base' // 'tiny', 'base', 'small', 'medium', 'large'
   }
 });
 
@@ -56,8 +58,34 @@ class Config {
     };
   }
 
+  static getTranscriptionMode() {
+    return store.get('transcriptionMode', 'cloud');
+  }
+
+  static setTranscriptionMode(mode) {
+    if (mode === 'cloud' || mode === 'local') {
+      store.set('transcriptionMode', mode);
+    }
+  }
+
+  static getWhisperModel() {
+    return store.get('whisperModel', 'base');
+  }
+
+  static setWhisperModel(model) {
+    store.set('whisperModel', model);
+  }
+
   static isConfigured() {
-    return this.getApiKey().length > 0;
+    const transcriptionMode = this.getTranscriptionMode();
+    
+    // For cloud mode, API key is required
+    if (transcriptionMode === 'cloud') {
+      return this.getApiKey().length > 0;
+    }
+    
+    // For local mode, no API key needed
+    return true;
   }
 }
 

@@ -280,6 +280,46 @@ ipcMain.handle('set-hotkey', async (event, hotkey) => {
   return true;
 });
 
+ipcMain.handle('get-transcription-mode', () => {
+  return Config.getTranscriptionMode();
+});
+
+ipcMain.handle('set-transcription-mode', (event, mode) => {
+  Config.setTranscriptionMode(mode);
+  return true;
+});
+
+ipcMain.handle('get-whisper-model', () => {
+  return Config.getWhisperModel();
+});
+
+ipcMain.handle('set-whisper-model', (event, model) => {
+  Config.setWhisperModel(model);
+  return true;
+});
+
+ipcMain.handle('is-model-available', (event, modelName) => {
+  return transcriptionService.localService.isModelAvailable(modelName);
+});
+
+ipcMain.handle('get-model-size', (event, modelName) => {
+  return transcriptionService.localService.getModelSize(modelName);
+});
+
+ipcMain.handle('download-model', async (event, modelName) => {
+  try {
+    await transcriptionService.localService.downloadModel(modelName, (percent, message) => {
+      if (settingsWindow && !settingsWindow.isDestroyed()) {
+        settingsWindow.webContents.send('download-progress', percent, message);
+      }
+    });
+    return true;
+  } catch (error) {
+    Logger.error('Error downloading model:', error);
+    throw error;
+  }
+});
+
 ipcMain.on('close-settings', () => {
   if (settingsWindow) {
     settingsWindow.close();

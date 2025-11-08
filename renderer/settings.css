@@ -319,3 +319,25 @@ kbd {
     display: block;
 }
 
+.download-btn {
+    background: #6BB589;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.download-btn:hover:not(:disabled) {
+    background: #559f70;
+}
+
+.download-btn:disabled {
+    background: #4a4a4a;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
