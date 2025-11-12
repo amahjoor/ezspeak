@@ -94,7 +94,7 @@ class AudioRecorder {
       throw new Error('Recording already in progress');
     }
 
-    const tempDir = path.join(os.tmpdir(), 'easyspeak');
+    const tempDir = path.join(os.tmpdir(), 'ezspeak');
     if (!fs.existsSync(tempDir)) {
       Logger.log('Creating temp directory:', tempDir);
       fs.mkdirSync(tempDir, { recursive: true });

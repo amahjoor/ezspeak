@@ -1,5 +1,6 @@
 const { clipboard } = require('electron');
 const { keyboard, Key } = require('@nut-tree-fork/nut-js');
+const os = require('os');
 
 class ClipboardManager {
   /**
@@ -14,9 +15,12 @@ class ClipboardManager {
       // Copy text to clipboard
       clipboard.writeText(text);
       
-      // Simulate Ctrl+V to paste
-      await keyboard.pressKey(Key.LeftControl, Key.V);
-      await keyboard.releaseKey(Key.LeftControl, Key.V);
+      // Use Cmd+V on macOS, Ctrl+V on Windows/Linux
+      const isMac = os.platform() === 'darwin';
+      const modifierKey = isMac ? Key.LeftSuper : Key.LeftControl;
+      
+      await keyboard.pressKey(modifierKey, Key.V);
+      await keyboard.releaseKey(modifierKey, Key.V);
       
       // Restore original clipboard after a short delay
       setTimeout(() => {

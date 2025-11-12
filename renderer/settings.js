@@ -1,29 +1,128 @@
 // Key mapping from keyboard events to uiohook key names
 const keyToUiohook = {
+    // Function keys
     'F1': 'F1', 'F2': 'F2', 'F3': 'F3', 'F4': 'F4', 'F5': 'F5', 'F6': 'F6',
     'F7': 'F7', 'F8': 'F8', 'F9': 'F9', 'F10': 'F10', 'F11': 'F11', 'F12': 'F12',
-    'ControlLeft': 'CtrlLeft', 'ControlRight': 'CtrlRight',
-    'AltLeft': 'AltLeft', 'AltRight': 'AltRight',
-    'ShiftLeft': 'ShiftLeft', 'ShiftRight': 'ShiftRight',
+    'F13': 'F13', 'F14': 'F14', 'F15': 'F15', 'F16': 'F16', 'F17': 'F17',
+    'F18': 'F18', 'F19': 'F19', 'F20': 'F20', 'F21': 'F21', 'F22': 'F22',
+    'F23': 'F23', 'F24': 'F24',
+
+    // Modifier keys
+    'ControlLeft': 'Ctrl', 'ControlRight': 'CtrlRight',
+    'AltLeft': 'Alt', 'AltRight': 'AltRight',
+    'ShiftLeft': 'Shift', 'ShiftRight': 'ShiftRight',
+    'MetaLeft': 'Meta', 'MetaRight': 'MetaRight',
+
+    // Letters
+    'KeyA': 'A', 'KeyB': 'B', 'KeyC': 'C', 'KeyD': 'D', 'KeyE': 'E',
+    'KeyF': 'F', 'KeyG': 'G', 'KeyH': 'H', 'KeyI': 'I', 'KeyJ': 'J',
+    'KeyK': 'K', 'KeyL': 'L', 'KeyM': 'M', 'KeyN': 'N', 'KeyO': 'O',
+    'KeyP': 'P', 'KeyQ': 'Q', 'KeyR': 'R', 'KeyS': 'S', 'KeyT': 'T',
+    'KeyU': 'U', 'KeyV': 'V', 'KeyW': 'W', 'KeyX': 'X', 'KeyY': 'Y',
+    'KeyZ': 'Z',
+
+    // Numbers
+    'Digit0': '0', 'Digit1': '1', 'Digit2': '2', 'Digit3': '3', 'Digit4': '4',
+    'Digit5': '5', 'Digit6': '6', 'Digit7': '7', 'Digit8': '8', 'Digit9': '9',
+
+    // Symbols and punctuation
     'Space': 'Space', 'Enter': 'Enter', 'Escape': 'Escape',
-    'Tab': 'Tab', 'CapsLock': 'CapsLock'
+    'Tab': 'Tab', 'CapsLock': 'CapsLock',
+    'Backspace': 'Backspace', 'Delete': 'Delete',
+    'Insert': 'Insert', 'Home': 'Home', 'End': 'End',
+    'PageUp': 'PageUp', 'PageDown': 'PageDown',
+    'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
+    'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight',
+    'Backquote': 'Backquote', 'Minus': 'Minus', 'Equal': 'Equal',
+    'BracketLeft': 'BracketLeft', 'BracketRight': 'BracketRight',
+    'Backslash': 'Backslash', 'Semicolon': 'Semicolon',
+    'Quote': 'Quote', 'Comma': 'Comma', 'Period': 'Period',
+    'Slash': 'Slash', 'PrintScreen': 'PrintScreen',
+    'ScrollLock': 'ScrollLock', 'NumLock': 'NumLock',
+
+    // Numpad
+    'Numpad0': 'Numpad0', 'Numpad1': 'Numpad1', 'Numpad2': 'Numpad2',
+    'Numpad3': 'Numpad3', 'Numpad4': 'Numpad4', 'Numpad5': 'Numpad5',
+    'Numpad6': 'Numpad6', 'Numpad7': 'Numpad7', 'Numpad8': 'Numpad8',
+    'Numpad9': 'Numpad9', 'NumpadAdd': 'NumpadAdd', 'NumpadSubtract': 'NumpadSubtract',
+    'NumpadMultiply': 'NumpadMultiply', 'NumpadDivide': 'NumpadDivide',
+    'NumpadDecimal': 'NumpadDecimal', 'NumpadEnter': 'NumpadEnter',
+    'NumpadArrowUp': 'NumpadArrowUp', 'NumpadArrowDown': 'NumpadArrowDown',
+    'NumpadArrowLeft': 'NumpadArrowLeft', 'NumpadArrowRight': 'NumpadArrowRight',
+    'NumpadHome': 'NumpadHome', 'NumpadEnd': 'NumpadEnd',
+    'NumpadPageUp': 'NumpadPageUp', 'NumpadPageDown': 'NumpadPageDown',
+    'NumpadInsert': 'NumpadInsert', 'NumpadDelete': 'NumpadDelete'
 };
 
-// Display friendly names for keys
+// Display friendly names for keys (macOS-friendly)
 const keyDisplayNames = {
+    // Function keys
     'F1': 'F1', 'F2': 'F2', 'F3': 'F3', 'F4': 'F4', 'F5': 'F5', 'F6': 'F6',
     'F7': 'F7', 'F8': 'F8', 'F9': 'F9', 'F10': 'F10', 'F11': 'F11', 'F12': 'F12',
+    'F13': 'F13', 'F14': 'F14', 'F15': 'F15', 'F16': 'F16', 'F17': 'F17',
+    'F18': 'F18', 'F19': 'F19', 'F20': 'F20', 'F21': 'F21', 'F22': 'F22',
+    'F23': 'F23', 'F24': 'F24',
+
+    // Modifier keys (macOS terminology)
+    'Ctrl': 'Ctrl',
     'CtrlRight': 'Right Ctrl',
-    'CtrlLeft': 'Left Ctrl',
+    'Alt': 'Alt',
     'AltRight': 'Right Alt',
-    'AltLeft': 'Left Alt',
+    'Shift': 'Shift',
     'ShiftRight': 'Right Shift',
-    'ShiftLeft': 'Left Shift',
+    'Meta': 'Left Command',  // macOS Command key
+    'MetaRight': 'Right Command',
+
+    // Letters
+    'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'H': 'H',
+    'I': 'I', 'J': 'J', 'K': 'K', 'L': 'L', 'M': 'M', 'N': 'N', 'O': 'O', 'P': 'P',
+    'Q': 'Q', 'R': 'R', 'S': 'S', 'T': 'T', 'U': 'U', 'V': 'V', 'W': 'W', 'X': 'X',
+    'Y': 'Y', 'Z': 'Z',
+
+    // Numbers
+    '0': '0', '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7',
+    '8': '8', '9': '9',
+
+    // Symbols and punctuation
     'Space': 'Space',
     'Enter': 'Enter',
     'Escape': 'Esc',
     'Tab': 'Tab',
-    'CapsLock': 'Caps Lock'
+    'CapsLock': 'Caps Lock',
+    'Backspace': 'Backspace',
+    'Delete': 'Delete',
+    'Insert': 'Insert',
+    'Home': 'Home',
+    'End': 'End',
+    'PageUp': 'Page Up',
+    'PageDown': 'Page Down',
+    'ArrowUp': '↑',
+    'ArrowDown': '↓',
+    'ArrowLeft': '←',
+    'ArrowRight': '→',
+    'Backquote': '`',
+    'Minus': '-',
+    'Equal': '=',
+    'BracketLeft': '[',
+    'BracketRight': ']',
+    'Backslash': '\\',
+    'Semicolon': ';',
+    'Quote': "'",
+    'Comma': ',',
+    'Period': '.',
+    'Slash': '/',
+    'PrintScreen': 'Print Screen',
+    'ScrollLock': 'Scroll Lock',
+    'NumLock': 'Num Lock',
+
+    // Numpad
+    'Numpad0': 'Num 0', 'Numpad1': 'Num 1', 'Numpad2': 'Num 2', 'Numpad3': 'Num 3',
+    'Numpad4': 'Num 4', 'Numpad5': 'Num 5', 'Numpad6': 'Num 6', 'Numpad7': 'Num 7',
+    'Numpad8': 'Num 8', 'Numpad9': 'Num 9', 'NumpadAdd': 'Num +', 'NumpadSubtract': 'Num -',
+    'NumpadMultiply': 'Num *', 'NumpadDivide': 'Num ÷', 'NumpadDecimal': 'Num .', 'NumpadEnter': 'Num Enter',
+    'NumpadArrowUp': 'Num ↑', 'NumpadArrowDown': 'Num ↓', 'NumpadArrowLeft': 'Num ←', 'NumpadArrowRight': 'Num →',
+    'NumpadHome': 'Num Home', 'NumpadEnd': 'Num End', 'NumpadPageUp': 'Num Page Up', 'NumpadPageDown': 'Num Page Down',
+    'NumpadInsert': 'Num Insert', 'NumpadDelete': 'Num Delete'
 };
 
 // Load current settings

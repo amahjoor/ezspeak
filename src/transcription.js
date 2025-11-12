@@ -122,7 +122,7 @@ class TranscriptionService {
    */
   async transcribeBuffer(audioBuffer) {
     const os = require('os');
-    const tempDir = path.join(os.tmpdir(), 'easyspeak');
+    const tempDir = path.join(os.tmpdir(), 'ezspeak');
     
     // Ensure temp directory exists
     if (!fs.existsSync(tempDir)) {

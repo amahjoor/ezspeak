@@ -1,12 +1,13 @@
 const Store = require('electron-store');
+const os = require('os');
 
 const store = new Store({
-  name: 'easyspeak-config',
+  name: 'ezspeak-config',
   defaults: {
     apiKey: '',
     mode: 'toggle', // 'toggle' or 'hold'
     microphoneDeviceId: 'default',
-    hotkey: 'CtrlRight', // Default to Right Control
+    hotkey: os.platform() === 'darwin' ? 'MetaRight' : 'CtrlRight', // Platform-specific: Right Command (⌘) on macOS, Right Ctrl on Windows/Linux
     sampleRate: 16000,
     channels: 1,
     bitDepth: 16
@@ -41,7 +42,7 @@ class Config {
   }
 
   static getHotkey() {
-    return store.get('hotkey', 'CtrlRight');
+    return store.get('hotkey'); // Uses the platform-specific default from store initialization
   }
 
   static setHotkey(hotkey) {

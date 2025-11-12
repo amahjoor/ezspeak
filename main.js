@@ -35,6 +35,8 @@ function createRecordingIndicator() {
     resizable: false,
     show: false,
     focusable: false,
+    acceptFirstMouse: false, // Prevent window from stealing focus on macOS
+    visibleOnAllWorkspaces: true, // Show on all desktops without stealing focus
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
@@ -47,13 +49,13 @@ function createRecordingIndicator() {
 
 function showRecordingIndicator() {
   if (recordingIndicator && !recordingIndicator.isDestroyed()) {
-    recordingIndicator.show();
+    recordingIndicator.showInactive(); // Show without stealing focus
     // Trigger timer reset by sending a message to reload the page
     recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
   } else {
     createRecordingIndicator();
     recordingIndicator.once('ready-to-show', () => {
-      recordingIndicator.show();
+      recordingIndicator.showInactive(); // Show without stealing focus
       // Trigger timer start after window is shown
       recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
     });
@@ -67,7 +69,9 @@ function hideRecordingIndicator() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'assets', 'icon.ico');
+  // Use SVG on macOS, ICO on Windows
+  const iconFile = process.platform === 'darwin' ? 'icon.svg' : 'icon.ico';
+  const iconPath = path.join(__dirname, 'assets', iconFile);
   const icon = nativeImage.createFromPath(iconPath);
   tray = new Tray(icon);
   updateTrayMenu();
@@ -108,6 +112,8 @@ function createSettingsWindow() {
     height: 450,
     resizable: false,
     frame: false, // Remove default frame for custom title bar
+    show: false, // Don't show window automatically - only show when explicitly called
+    skipTaskbar: false, // Show in taskbar when visible
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -131,9 +137,11 @@ function createSettingsWindow() {
 
 function showSettingsWindow() {
   if (settingsWindow) {
+    settingsWindow.show();
     settingsWindow.focus();
   } else {
     createSettingsWindow();
+    settingsWindow.show();
   }
 }
 
@@ -315,27 +323,31 @@ app.whenReady().then(async () => {
   // Start monitoring for hotkey
   await hotkeyManager.startMonitoring();
   
-  // Always show settings window so audio recording works
-  showSettingsWindow();
-  Logger.success('Settings window shown');
+  // Create settings window (needed for audio recording) but don't show it initially
+  createSettingsWindow();
+  Logger.success('Settings window created');
+  
+  // Only show settings window if not configured (first time setup)
+  if (!Config.isConfigured()) {
+    settingsWindow.show();
+    Logger.log('First time setup - showing settings window');
+  } else {
+    Logger.log('App running in background - use tray icon to open settings');
+  }
   
   console.log('\n========================================');
-  console.log('   easyspeak is ready!');
+  console.log('   ezspeak is ready!');
   console.log('========================================\n');
 });
 
 app.on('window-all-closed', (event) => {
-  // On Windows, keep app running even when all windows are closed
-  // (since we're using system tray)
-  if (process.platform !== 'darwin') {
-    // Don't quit on Windows
-  }
+  // Don't quit the app when all windows are closed - keep running in system tray
+  // This works on both Windows and macOS
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    showSettingsWindow();
-  }
+  // On macOS, clicking the dock icon should show the settings window
+  showSettingsWindow();
 });
 
 app.on('before-quit', () => {

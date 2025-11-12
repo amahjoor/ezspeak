@@ -37,6 +37,11 @@
       "icon": "assets/icon.ico",
       "publisherName": "Arman Mahjoor"
     },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.svg",
+      "category": "public.app-category.productivity"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
