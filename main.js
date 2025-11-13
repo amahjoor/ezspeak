@@ -1,20 +1,11 @@
-// Configure PATH for ffmpeg-static before anything else loads
-const ffmpegPath = require('ffmpeg-static');
-const path = require('path');
-const ffmpegDir = path.dirname(ffmpegPath);
-const originalPath = process.env.PATH || '';
-process.env.PATH = ffmpegDir + path.delimiter + originalPath;
-
 const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
+const path = require('path');
 const HotkeyManager = require('./src/hotkeyManager');
 const AudioRecorder = require('./src/audioRecorder');
 const TranscriptionService = require('./src/transcription');
 const ClipboardManager = require('./src/clipboardManager');
 const Config = require('./src/config');
 const Logger = require('./src/logger');
-
-// Configure shelljs globally for Electron compatibility
-require('shelljs').config.execPath = process.execPath;
 
 // Disable GPU to prevent flashing and GPU errors
 app.commandLine.appendSwitch('disable-gpu');

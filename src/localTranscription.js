@@ -8,6 +8,7 @@ class LocalTranscriptionService {
     this.modelPath = null;
     this.modelName = 'base.en'; // Default model
     this.isInitialized = false;
+    this.ffmpegPath = null; // Cache for extracted FFmpeg path
     Logger.log('LocalTranscriptionService initialized');
   }
 
@@ -34,8 +35,8 @@ class LocalTranscriptionService {
       
       // Check if model exists
       if (!fs.existsSync(this.modelPath)) {
-        Logger.log('Model not found, will download on first use');
-        await this.downloadModel(modelsDir);
+        Logger.log('Model not found, copying from bundle...');
+        await this.copyBundledModel(modelsDir);
       } else {
         Logger.success('Local Whisper model found:', this.modelPath);
       }
@@ -48,45 +49,96 @@ class LocalTranscriptionService {
   }
 
   /**
-   * Download Whisper model
+   * Copy bundled Whisper model to userData
    */
-  async downloadModel(modelsDir) {
-    Logger.log('Downloading Whisper model...');
-    
-    const modelUrl = `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${this.modelName}.bin`;
-    const axios = require('axios');
-    
+  async copyBundledModel(modelsDir) {
+    Logger.log('Copying bundled Whisper model...');
+
+    let bundledModelPath;
     try {
-      Logger.log(`Downloading from: ${modelUrl}`);
-      
-      const response = await axios({
-        method: 'GET',
-        url: modelUrl,
-        responseType: 'stream',
-        timeout: 300000, // 5 minute timeout for download
-        onDownloadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (percentCompleted % 10 === 0) {
-              Logger.log(`Download progress: ${percentCompleted}%`);
-            }
-          }
-        }
-      });
+      const { app } = require('electron');
+      if (app && app.isPackaged) {
+        // Production: model is in process.resourcesPath
+        bundledModelPath = path.join(process.resourcesPath, 'whisper-models', `ggml-${this.modelName}.bin`);
+      } else {
+        // Development: model is in project root
+        bundledModelPath = path.join(__dirname, '..', 'whisper-models', `ggml-${this.modelName}.bin`);
+      }
+    } catch (e) {
+      // Fallback
+      bundledModelPath = path.join(process.resourcesPath || path.join(__dirname, '..'), 'whisper-models', `ggml-${this.modelName}.bin`);
+    }
 
-      const writer = fs.createWriteStream(this.modelPath);
-      response.data.pipe(writer);
+    if (!fs.existsSync(bundledModelPath)) {
+      throw new Error(`Bundled model not found at: ${bundledModelPath}. Please ensure the build includes the whisper-models folder.`);
+    }
 
-      return new Promise((resolve, reject) => {
-        writer.on('finish', () => {
-          Logger.success('Model downloaded successfully!');
-          resolve();
-        });
-        writer.on('error', reject);
-      });
+    try {
+      fs.copyFileSync(bundledModelPath, this.modelPath);
+      Logger.success('Model copied successfully!');
     } catch (error) {
-      Logger.error('Error downloading model:', error);
-      throw new Error('Failed to download Whisper model. Please check your internet connection.');
+      Logger.error('Error copying bundled model:', error);
+      throw new Error('Failed to copy Whisper model from bundle.');
+    }
+  }
+
+  /**
+   * Get FFmpeg path, extracting from app.asar if needed
+   */
+  async getFfmpegPath() {
+    // Return cached path if available
+    if (this.ffmpegPath && fs.existsSync(this.ffmpegPath)) {
+      return this.ffmpegPath;
+    }
+
+    let ffmpegPath = require('ffmpeg-static');
+    if (!ffmpegPath) {
+      throw new Error('ffmpeg-static not found. Please ensure it is installed.');
+    }
+
+    // Check if FFmpeg is inside app.asar (packaged build)
+    if (ffmpegPath.includes('app.asar')) {
+      Logger.log('FFmpeg is inside app.asar, extracting...');
+      
+      try {
+        const { app } = require('electron');
+        const userDataPath = app.getPath('userData');
+        const ffmpegDir = path.join(userDataPath, 'ffmpeg');
+        const extractedPath = path.join(ffmpegDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+        
+        // Create directory if it doesn't exist
+        if (!fs.existsSync(ffmpegDir)) {
+          fs.mkdirSync(ffmpegDir, { recursive: true });
+        }
+        
+        // Extract FFmpeg if not already extracted
+        if (!fs.existsSync(extractedPath)) {
+          Logger.log('Extracting FFmpeg to:', extractedPath);
+          const ffmpegBuffer = fs.readFileSync(ffmpegPath);
+          fs.writeFileSync(extractedPath, ffmpegBuffer);
+          
+          // Make executable on Unix systems
+          if (process.platform !== 'win32') {
+            fs.chmodSync(extractedPath, 0o755);
+          }
+          
+          Logger.success('FFmpeg extracted successfully');
+        } else {
+          Logger.log('FFmpeg already extracted');
+        }
+        
+        this.ffmpegPath = extractedPath;
+        return extractedPath;
+      } catch (error) {
+        Logger.error('Error extracting FFmpeg:', error);
+        // Fallback to original path (might fail, but worth trying)
+        this.ffmpegPath = ffmpegPath;
+        return ffmpegPath;
+      }
+    } else {
+      // Development mode or already extracted
+      this.ffmpegPath = ffmpegPath;
+      return ffmpegPath;
     }
   }
 
@@ -100,7 +152,8 @@ class LocalTranscriptionService {
       return audioFilePath;
     }
 
-    const ffmpegPath = require('ffmpeg-static');
+    // Use getFfmpegPath() to handle app.asar extraction
+    const ffmpegPath = await this.getFfmpegPath();
     if (!ffmpegPath) {
       throw new Error('ffmpeg-static not found. Please ensure it is installed.');
     }
