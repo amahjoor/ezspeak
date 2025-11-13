@@ -106,6 +106,14 @@ function updateTrayMenu() {
         showSettingsWindow();
       }
     },
+    {
+      label: 'Open DevTools',
+      click: () => {
+        if (settingsWindow && !settingsWindow.isDestroyed()) {
+          settingsWindow.webContents.openDevTools();
+        }
+      }
+    },
     { type: 'separator' },
     {
       label: 'Quit',
@@ -137,7 +145,15 @@ function createSettingsWindow() {
 
   settingsWindow.loadFile('renderer/settings.html');
   
-  // Open DevTools only in dev mode
+  // Enable DevTools - can be opened with F12 or Ctrl+Shift+I
+  // Always enable for debugging (can be disabled in production later)
+  settingsWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || (input.control && input.shift && input.key === 'I')) {
+      settingsWindow.webContents.toggleDevTools();
+    }
+  });
+  
+  // Open DevTools in dev mode automatically
   if (process.argv.includes('--dev')) {
     settingsWindow.webContents.openDevTools({ mode: 'detach' });
     Logger.log('DevTools opened (dev mode)');
@@ -248,15 +264,24 @@ async function handleRecordStop() {
     recordingStatus = 'idle';
     updateTrayMenu();
   } catch (error) {
-    Logger.error('Error in recording/transcription:', error.message);
-    Logger.error('Stack:', error.stack);
+    const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
+    const errorStack = error?.stack || 'No stack trace available';
+    
+    Logger.error('Error in recording/transcription:', errorMessage);
+    Logger.error('Full error object:', error);
+    Logger.error('Stack:', errorStack);
+    
     recordingStatus = 'idle';
     updateTrayMenu();
     hideRecordingIndicator();
     
-    // Optionally show error notification
-    if (settingsWindow) {
-      settingsWindow.webContents.send('error', error.message);
+    // Send error to renderer if settings window is open
+    if (settingsWindow && !settingsWindow.isDestroyed()) {
+      try {
+        settingsWindow.webContents.send('error', errorMessage);
+      } catch (e) {
+        Logger.error('Failed to send error to renderer:', e);
+      }
     }
   }
 }
@@ -342,7 +367,23 @@ ipcMain.on('open-external', (event, url) => {
 });
 
 // App lifecycle
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  Logger.error('Uncaught Exception:', error);
+  Logger.error('Stack:', error.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  Logger.error('Unhandled Rejection at:', promise);
+  Logger.error('Reason:', reason);
+  if (reason instanceof Error) {
+    Logger.error('Error message:', reason.message);
+    Logger.error('Stack:', reason.stack);
+  }
+});
+
 app.whenReady().then(async () => {
+  Logger.init(); // Initialize file logging
   Logger.log('App ready, initializing...');
   
   // Force dark mode for window chrome

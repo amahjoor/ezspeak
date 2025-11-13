@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-  <!-- Background -->
-  <rect width="1000" height="1000" fill="#6BB589"/>
-  
-  <!-- Text: ezspeak -->
-  <text x="500" y="500" font-family="Helvetica, Arial, sans-serif" font-size="207" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="-14" dominant-baseline="middle">ezspeak</text>
-</svg>
-

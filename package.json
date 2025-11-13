@@ -1,14 +1,12 @@
 {
   "name": "ezspeak",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Voice-to-text transcription with global hotkey activation",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
-    "setup": "node scripts/download-whisper.js",
-    "prebuild": "node scripts/download-whisper.js"
+    "build": "electron-builder"
   },
   "keywords": [
     "voice",
@@ -24,16 +22,11 @@
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
-    "@types/node": "^24.10.1",
     "axios": "^1.6.0",
     "electron-store": "^8.1.0",
     "ffmpeg-static": "^5.2.0",
     "form-data": "^4.0.0",
-    "node-fetch": "^3.3.2",
-    "nodejs-whisper": "^0.2.9",
-    "uiohook-napi": "^1.5.4",
-    "wav": "^1.0.2",
-    "whisper-node": "^1.1.1"
+    "uiohook-napi": "^1.5.4"
   },
   "build": {
     "appId": "com.ezspeak.app",
@@ -41,12 +34,12 @@
     "forceCodeSigning": false,
     "files": [
       "**/*",
-      "bin/**/*"
+      "!whisper-bin/**/*"
     ],
     "extraResources": [
       {
-        "from": "bin",
-        "to": "bin",
+        "from": "whisper-bin",
+        "to": "whisper-bin",
         "filter": [
           "**/*"
         ]

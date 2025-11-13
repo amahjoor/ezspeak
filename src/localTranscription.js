@@ -292,7 +292,74 @@ class LocalTranscriptionService {
   async ensureWhisperBinary() {
     const fs = require('fs');
     const path = require('path');
-    const binaryDir = path.join(__dirname, '..', 'whisper-bin');
+    
+    // In production, extraResources are in process.resourcesPath
+    // In development, they're in the project root
+    let binaryDir;
+    try {
+      const { app } = require('electron');
+      if (app && app.isPackaged) {
+        // Production: extraResources are in process.resourcesPath
+        binaryDir = path.join(process.resourcesPath, 'whisper-bin');
+      } else {
+        // Development: in project root
+        binaryDir = path.join(__dirname, '..', 'whisper-bin');
+      }
+    } catch (e) {
+      // Fallback: check if we're in packaged app by checking process.resourcesPath
+      if (process.resourcesPath) {
+        binaryDir = path.join(process.resourcesPath, 'whisper-bin');
+      } else {
+        binaryDir = path.join(__dirname, '..', 'whisper-bin');
+      }
+    }
+    
+    Logger.log('Looking for whisper binary in:', binaryDir);
+    Logger.log('process.resourcesPath:', process.resourcesPath);
+    Logger.log('__dirname:', __dirname);
+    Logger.log('Directory exists:', fs.existsSync(binaryDir));
+
+    // Check if directory exists
+    if (!fs.existsSync(binaryDir)) {
+      Logger.error('Whisper binary directory does not exist:', binaryDir);
+      Logger.log('Trying alternative paths...');
+      
+      // Try alternative paths
+      const alternatives = [
+        path.join(process.resourcesPath || '', 'whisper-bin'),
+        path.join(__dirname, '..', 'whisper-bin'),
+        path.join(process.cwd(), 'whisper-bin')
+      ];
+      
+      // Try to get app path if available
+      try {
+        const { app } = require('electron');
+        if (app && app.getAppPath) {
+          alternatives.push(path.join(app.getAppPath(), 'whisper-bin'));
+        }
+      } catch (e) {
+        // Ignore if app not available
+      }
+      
+      for (const altPath of alternatives) {
+        Logger.log('Checking alternative:', altPath);
+        if (fs.existsSync(altPath)) {
+          Logger.log('Found binary directory at:', altPath);
+          binaryDir = altPath;
+          break;
+        }
+      }
+    }
+
+    // List files in directory for debugging
+    if (fs.existsSync(binaryDir)) {
+      try {
+        const files = fs.readdirSync(binaryDir);
+        Logger.log('Files in binary directory:', files.join(', '));
+      } catch (e) {
+        Logger.error('Error reading binary directory:', e);
+      }
+    }
 
     // Support either whisper-cli.exe or main.exe (common whisper.cpp CLI names on Windows)
     const candidates = process.platform === 'win32'
@@ -301,21 +368,19 @@ class LocalTranscriptionService {
 
     for (const name of candidates) {
       const candidatePath = path.join(binaryDir, name);
+      Logger.log('Checking for:', candidatePath, 'exists:', fs.existsSync(candidatePath));
       if (fs.existsSync(candidatePath)) {
-        // Ensure executable bit or rely on Windows
+        Logger.log('Found whisper binary:', candidatePath);
         return candidatePath;
       }
     }
 
     // Not found - provide clear actionable instructions
     const expectedList = candidates.map(n => path.join(binaryDir, n)).join(' or ');
+    Logger.error('Whisper CLI not found at:', expectedList);
     throw new Error(
-      `Whisper CLI not found. Please place a prebuilt whisper.cpp CLI at: ${expectedList}\n` +
-      `Notes:\n` +
-      `- Download a Windows build of whisper.cpp (the CLI is typically 'main.exe' or 'whisper-cli.exe').\n` +
-      `- Put it in the 'whisper-bin' folder at the app root.\n` +
-      `- Ensure your model exists at ${this.modelPath} (it does in your case).\n` +
-      `After placing the binary, try again.`
+      `Whisper CLI not found. Expected location: ${expectedList}\n` +
+      `Please ensure the whisper-bin folder is included in the app build.`
     );
   }
 
