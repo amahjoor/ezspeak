@@ -7,20 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setMicrophone: (deviceId) => ipcRenderer.invoke('set-microphone', deviceId),
   getHotkey: () => ipcRenderer.invoke('get-hotkey'),
   setHotkey: (hotkey) => ipcRenderer.invoke('set-hotkey', hotkey),
-  isConfigured: () => ipcRenderer.invoke('is-configured'),
-  // Transcription mode
   getTranscriptionMode: () => ipcRenderer.invoke('get-transcription-mode'),
   setTranscriptionMode: (mode) => ipcRenderer.invoke('set-transcription-mode', mode),
-  getWhisperModel: () => ipcRenderer.invoke('get-whisper-model'),
-  setWhisperModel: (model) => ipcRenderer.invoke('set-whisper-model', model),
-  // Model management
-  isModelAvailable: (modelName) => ipcRenderer.invoke('is-model-available', modelName),
-  getModelSize: (modelName) => ipcRenderer.invoke('get-model-size', modelName),
-  downloadModel: (modelName, progressCallback) => ipcRenderer.invoke('download-model', modelName),
-  onDownloadProgress: (callback) => {
-    ipcRenderer.on('download-progress', (event, percent, message) => callback(percent, message));
-  },
-  // Window controls
+  checkModelDownloaded: () => ipcRenderer.invoke('check-model-downloaded'),
+  downloadModel: () => ipcRenderer.invoke('download-model'),
+  isConfigured: () => ipcRenderer.invoke('is-configured'),
   closeSettings: () => ipcRenderer.send('close-settings'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   openExternal: (url) => ipcRenderer.send('open-external', url),

@@ -32,24 +32,13 @@ async function loadSettings() {
         const apiKey = await window.electronAPI.getApiKey();
         const hotkey = await window.electronAPI.getHotkey();
         const transcriptionMode = await window.electronAPI.getTranscriptionMode();
-        const whisperModel = await window.electronAPI.getWhisperModel();
         
         const apiKeyInput = document.getElementById('apiKey');
         const hotkeyInput = document.getElementById('hotkey');
-        const transcriptionModeSelect = document.getElementById('transcriptionMode');
-        const whisperModelSelect = document.getElementById('whisperModel');
+        const providerSelect = document.getElementById('transcriptionProvider');
         
         if (apiKeyInput) {
             apiKeyInput.value = apiKey || '';
-        }
-        
-        if (transcriptionModeSelect) {
-            transcriptionModeSelect.value = transcriptionMode || 'cloud';
-            updateModeVisibility(transcriptionMode || 'cloud');
-        }
-        
-        if (whisperModelSelect) {
-            whisperModelSelect.value = whisperModel || 'base';
         }
         
         const displayName = keyDisplayNames[hotkey] || hotkey;
@@ -57,86 +46,45 @@ async function loadSettings() {
         if (hotkeyInput) {
             hotkeyInput.value = displayName;
         }
-
-        // Check model status if in local mode
-        if (transcriptionMode === 'local') {
-            await checkModelStatus();
+        
+        // Set transcription provider
+        if (providerSelect) {
+            providerSelect.value = transcriptionMode || 'online';
+            updateProviderUI(transcriptionMode || 'online');
         }
     } catch (error) {
         console.error('Error loading settings:', error);
     }
 }
 
-// Update visibility of mode-specific settings
-function updateModeVisibility(mode) {
-    const apiKeyGroup = document.getElementById('apiKeyGroup');
-    const whisperModelGroup = document.getElementById('whisperModelGroup');
+// Update UI based on selected provider
+async function updateProviderUI(mode) {
+    const apiKeyContainer = document.getElementById('apiKeyContainer');
+    const downloadBtn = document.getElementById('downloadModelBtn');
+    const helpOnline = document.getElementById('helpOnline');
+    const helpOffline = document.getElementById('helpOffline');
     
-    if (mode === 'local') {
-        apiKeyGroup.style.display = 'none';
-        whisperModelGroup.style.display = 'block';
-        checkModelStatus();
-    } else {
-        apiKeyGroup.style.display = 'block';
-        whisperModelGroup.style.display = 'none';
-    }
-}
-
-// Check if the selected model is available
-async function checkModelStatus() {
-    try {
-        const modelSelect = document.getElementById('whisperModel');
-        const modelStatus = document.getElementById('modelStatus');
-        const downloadBtn = document.getElementById('downloadModelBtn');
-        const selectedModel = modelSelect.value;
+    if (mode === 'offline') {
+        // Hide API key input for offline mode
+        if (apiKeyContainer) apiKeyContainer.style.display = 'none';
+        if (helpOnline) helpOnline.style.display = 'none';
+        if (helpOffline) helpOffline.style.display = 'inline';
         
-        const isAvailable = await window.electronAPI.isModelAvailable(selectedModel);
-        
-        if (isAvailable) {
-            const size = await window.electronAPI.getModelSize(selectedModel);
-            modelStatus.textContent = `Model installed (${size} MB)`;
-            modelStatus.style.color = '#6BB589';
-            downloadBtn.style.display = 'none';
-        } else {
-            modelStatus.textContent = 'Model not installed';
-            modelStatus.style.color = '#e74c3c';
-            downloadBtn.style.display = 'inline-block';
+        // Check if model is downloaded
+        try {
+            const isDownloaded = await window.electronAPI.checkModelDownloaded();
+            if (downloadBtn) {
+                downloadBtn.style.display = isDownloaded ? 'none' : 'block';
+            }
+        } catch (error) {
+            console.error('Error checking model status:', error);
         }
-    } catch (error) {
-        console.error('Error checking model status:', error);
-    }
-}
-
-// Download the selected model
-async function downloadModel() {
-    try {
-        const modelSelect = document.getElementById('whisperModel');
-        const modelStatus = document.getElementById('modelStatus');
-        const downloadBtn = document.getElementById('downloadModelBtn');
-        const selectedModel = modelSelect.value;
-        
-        downloadBtn.disabled = true;
-        downloadBtn.textContent = 'Downloading...';
-        modelStatus.textContent = 'Starting download...';
-        
-        await window.electronAPI.downloadModel(selectedModel, (percent, message) => {
-            modelStatus.textContent = message;
-        });
-        
-        showToast('Model downloaded successfully!');
-        await checkModelStatus();
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = 'Download Model';
-    } catch (error) {
-        console.error('Error downloading model:', error);
-        const modelStatus = document.getElementById('modelStatus');
-        const downloadBtn = document.getElementById('downloadModelBtn');
-        
-        modelStatus.textContent = 'Download failed. Please try again.';
-        modelStatus.style.color = '#e74c3c';
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = 'Download Model';
-        showToast('Download failed: ' + error.message);
+    } else {
+        // Show API key input for online mode
+        if (apiKeyContainer) apiKeyContainer.style.display = 'flex';
+        if (downloadBtn) downloadBtn.style.display = 'none';
+        if (helpOnline) helpOnline.style.display = 'inline';
+        if (helpOffline) helpOffline.style.display = 'none';
     }
 }
 
@@ -201,32 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     setupToggleVisibility();
 });
-
-// Setup tooltip for API key info
-function setupTooltip() {
-    const infoIcon = document.getElementById('apiKeyInfo');
-    const tooltip = document.getElementById('apiKeyTooltip');
-    
-    if (infoIcon && tooltip) {
-        let hideTimeout;
-        
-        const showTooltip = () => {
-            clearTimeout(hideTimeout);
-            tooltip.style.display = 'block';
-        };
-        
-        const hideTooltip = () => {
-            hideTimeout = setTimeout(() => {
-                tooltip.style.display = 'none';
-            }, 100);
-        };
-        
-        infoIcon.addEventListener('mouseenter', showTooltip);
-        infoIcon.addEventListener('mouseleave', hideTooltip);
-        tooltip.addEventListener('mouseenter', showTooltip);
-        tooltip.addEventListener('mouseleave', hideTooltip);
-    }
-}
 
 // Setup window controls
 function setupWindowControls() {
@@ -306,13 +228,73 @@ function setupHotkeyCapture() {
     });
 }
 
+// Setup transcription provider handler
+function setupTranscriptionProvider() {
+    const providerSelect = document.getElementById('transcriptionProvider');
+    
+    if (providerSelect) {
+        providerSelect.addEventListener('change', async () => {
+            const mode = providerSelect.value;
+            try {
+                await window.electronAPI.setTranscriptionMode(mode);
+                await updateProviderUI(mode);
+                
+                const modeLabel = mode === 'offline' ? 'Local (Offline)' : 'OpenAI API';
+                showToast(`Provider changed to ${modeLabel}`);
+            } catch (error) {
+                console.error('Error setting transcription mode:', error);
+            }
+        });
+    }
+}
+
+// Setup model download button
+function setupModelDownload() {
+    const downloadBtn = document.getElementById('downloadModelBtn');
+    
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', async () => {
+            const downloadIcon = downloadBtn.querySelector('.download-icon');
+            const spinnerIcon = downloadBtn.querySelector('.spinner-icon');
+            
+            try {
+                // Disable button and show spinner
+                downloadBtn.disabled = true;
+                downloadIcon.style.display = 'none';
+                spinnerIcon.style.display = 'block';
+                
+                showToast('Downloading model (~150MB)...');
+                
+                // Trigger download
+                const result = await window.electronAPI.downloadModel();
+                
+                if (result.success) {
+                    showToast('Model downloaded successfully!');
+                    // Hide download button and reset icons
+                    downloadIcon.style.display = 'block';
+                    spinnerIcon.style.display = 'none';
+                    downloadBtn.disabled = false;
+                    downloadBtn.style.display = 'none';
+                } else {
+                    throw new Error(result.error || 'Download failed');
+                }
+            } catch (error) {
+                console.error('Error downloading model:', error);
+                showToast('Download failed: ' + error.message);
+                // Restore download icon
+                downloadBtn.disabled = false;
+                downloadIcon.style.display = 'block';
+                spinnerIcon.style.display = 'none';
+            }
+        });
+    }
+}
+
+
 // Setup auto-save for API key and microphone
 document.addEventListener('DOMContentLoaded', () => {
     const apiKeyInput = document.getElementById('apiKey');
     const micSelect = document.getElementById('microphone');
-    const transcriptionModeSelect = document.getElementById('transcriptionMode');
-    const whisperModelSelect = document.getElementById('whisperModel');
-    const downloadModelBtn = document.getElementById('downloadModelBtn');
     
     // Setup window controls
     setupWindowControls();
@@ -320,38 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup hotkey capture
     setupHotkeyCapture();
     
-    // Handle transcription mode change
-    if (transcriptionModeSelect) {
-        transcriptionModeSelect.addEventListener('change', async () => {
-            try {
-                const mode = transcriptionModeSelect.value;
-                await window.electronAPI.setTranscriptionMode(mode);
-                updateModeVisibility(mode);
-                showToast('Transcription mode changed');
-            } catch (error) {
-                console.error('Error saving transcription mode:', error);
-            }
-        });
-    }
+    // Setup transcription provider
+    setupTranscriptionProvider();
     
-    // Handle whisper model change
-    if (whisperModelSelect) {
-        whisperModelSelect.addEventListener('change', async () => {
-            try {
-                const model = whisperModelSelect.value;
-                await window.electronAPI.setWhisperModel(model);
-                await checkModelStatus();
-                showToast('Model selected');
-            } catch (error) {
-                console.error('Error saving whisper model:', error);
-            }
-        });
-    }
-    
-    // Handle download model button
-    if (downloadModelBtn) {
-        downloadModelBtn.addEventListener('click', downloadModel);
-    }
+    // Setup model download
+    setupModelDownload();
     
     // Auto-save API key on Enter or blur (when user clicks away)
     if (apiKeyInput) {
@@ -386,8 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.electronAPI.closeSettings();
         }
     });
-    
-    setupTooltip();
     
     // Make external links open in default browser
     document.addEventListener('click', (e) => {

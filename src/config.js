@@ -10,8 +10,7 @@ const store = new Store({
     sampleRate: 16000,
     channels: 1,
     bitDepth: 16,
-    transcriptionMode: 'cloud', // 'cloud' or 'local'
-    whisperModel: 'base' // 'tiny', 'base', 'small', 'medium', 'large'
+    transcriptionMode: 'online' // 'online' or 'offline'
   }
 });
 
@@ -59,33 +58,23 @@ class Config {
   }
 
   static getTranscriptionMode() {
-    return store.get('transcriptionMode', 'cloud');
+    return store.get('transcriptionMode', 'online');
   }
 
   static setTranscriptionMode(mode) {
-    if (mode === 'cloud' || mode === 'local') {
+    if (mode === 'online' || mode === 'offline') {
       store.set('transcriptionMode', mode);
     }
   }
 
-  static getWhisperModel() {
-    return store.get('whisperModel', 'base');
-  }
-
-  static setWhisperModel(model) {
-    store.set('whisperModel', model);
-  }
-
   static isConfigured() {
-    const transcriptionMode = this.getTranscriptionMode();
-    
-    // For cloud mode, API key is required
-    if (transcriptionMode === 'cloud') {
-      return this.getApiKey().length > 0;
+    const mode = this.getTranscriptionMode();
+    // If offline mode, no API key needed
+    if (mode === 'offline') {
+      return true;
     }
-    
-    // For local mode, no API key needed
-    return true;
+    // If online mode, API key is required
+    return this.getApiKey().length > 0;
   }
 }
 

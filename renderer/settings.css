@@ -319,25 +319,89 @@ kbd {
     display: block;
 }
 
-.download-btn {
-    background: #6BB589;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+/* Provider container styles */
+.provider-container {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.provider-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.provider-input {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.provider-input input {
+    width: 100%;
+    padding-right: 45px;
+}
+
+.download-icon-box {
+    flex: 0 0 auto;
+    width: 45px;
+    height: 45px;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s;
+    opacity: 0.8;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative;
 }
 
-.download-btn:hover:not(:disabled) {
-    background: #559f70;
+.download-icon-box:hover {
+    opacity: 1;
+    border-color: #0078d4;
+    background: #2d2d30;
 }
 
-.download-btn:disabled {
-    background: #4a4a4a;
+.download-icon-box:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.3;
+}
+
+.download-icon-box svg {
+    color: #858585;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.download-icon-box:hover svg {
+    color: #cccccc;
+}
+
+.download-icon-box .spinner-icon {
+    color: #858585;
+}
+
+.download-icon-box:hover .spinner-icon {
+    color: #cccccc;
+}
+
+#providerHelp {
+    margin-top: 8px;
+}
+
+#providerHelp a {
+    color: #4fc3f7;
+    text-decoration: none;
+}
+
+#providerHelp a:hover {
+    text-decoration: underline;
 }
 
