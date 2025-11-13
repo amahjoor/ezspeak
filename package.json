@@ -60,7 +60,7 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.svg",
+      "icon": "assets/icon.png",
       "category": "public.app-category.productivity"
     },
     "nsis": {

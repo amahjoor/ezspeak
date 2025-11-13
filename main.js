@@ -73,8 +73,8 @@ function hideRecordingIndicator() {
 }
 
 function createTray() {
-  // Use SVG on macOS, ICO on Windows
-  const iconFile = process.platform === 'darwin' ? 'icon.svg' : 'icon.ico';
+  // Use PNG on macOS (Electron doesn't support SVG for tray icons), ICO on Windows
+  const iconFile = process.platform === 'darwin' ? 'icon.png' : 'icon.ico';
   const iconPath = path.join(__dirname, 'assets', iconFile);
   const icon = nativeImage.createFromPath(iconPath);
   tray = new Tray(icon);
@@ -376,7 +376,14 @@ process.on('unhandledRejection', (reason, promise) => {
 app.whenReady().then(async () => {
   Logger.init(); // Initialize file logging
   Logger.log('App ready, initializing...');
-  
+
+  // Set app icon on macOS
+  if (process.platform === 'darwin') {
+    const iconPath = path.join(__dirname, 'assets', 'icon.png');
+    const icon = nativeImage.createFromPath(iconPath);
+    app.dock.setIcon(icon);
+  }
+
   // Force dark mode for window chrome
   nativeTheme.themeSource = 'dark';
   
