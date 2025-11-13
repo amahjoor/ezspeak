@@ -10,7 +10,8 @@ const store = new Store({
     hotkey: os.platform() === 'darwin' ? 'MetaRight' : 'CtrlRight', // Platform-specific: Right Command (⌘) on macOS, Right Ctrl on Windows/Linux
     sampleRate: 16000,
     channels: 1,
-    bitDepth: 16
+    bitDepth: 16,
+    transcriptionMode: 'online' // 'online' or 'offline'
   }
 });
 
@@ -57,7 +58,23 @@ class Config {
     };
   }
 
+  static getTranscriptionMode() {
+    return store.get('transcriptionMode', 'online');
+  }
+
+  static setTranscriptionMode(mode) {
+    if (mode === 'online' || mode === 'offline') {
+      store.set('transcriptionMode', mode);
+    }
+  }
+
   static isConfigured() {
+    const mode = this.getTranscriptionMode();
+    // If offline mode, no API key needed
+    if (mode === 'offline') {
+      return true;
+    }
+    // If online mode, API key is required
     return this.getApiKey().length > 0;
   }
 }

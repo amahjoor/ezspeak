@@ -1,11 +1,24 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
+// Configure PATH for ffmpeg-static before anything else loads
+const ffmpegPath = require('ffmpeg-static');
 const path = require('path');
+const ffmpegDir = path.dirname(ffmpegPath);
+const originalPath = process.env.PATH || '';
+process.env.PATH = ffmpegDir + path.delimiter + originalPath;
+
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
 const HotkeyManager = require('./src/hotkeyManager');
 const AudioRecorder = require('./src/audioRecorder');
 const TranscriptionService = require('./src/transcription');
 const ClipboardManager = require('./src/clipboardManager');
 const Config = require('./src/config');
 const Logger = require('./src/logger');
+
+// Configure shelljs globally for Electron compatibility
+require('shelljs').config.execPath = process.execPath;
+
+// Disable GPU to prevent flashing and GPU errors
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-software-rasterizer');
 
 let mainWindow = null;
 let settingsWindow = null;
@@ -109,7 +122,7 @@ function updateTrayMenu() {
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 450,
+    height: 550,
     resizable: false,
     frame: false, // Remove default frame for custom title bar
     show: false, // Don't show window automatically - only show when explicitly called
@@ -286,6 +299,30 @@ ipcMain.handle('set-hotkey', async (event, hotkey) => {
   }
   
   return true;
+});
+
+ipcMain.handle('get-transcription-mode', () => {
+  return Config.getTranscriptionMode();
+});
+
+ipcMain.handle('set-transcription-mode', (event, mode) => {
+  Config.setTranscriptionMode(mode);
+  Logger.log(`Transcription mode set to: ${mode}`);
+  return true;
+});
+
+ipcMain.handle('check-model-downloaded', () => {
+  return transcriptionService.localService.isModelDownloaded();
+});
+
+ipcMain.handle('download-model', async () => {
+  try {
+    await transcriptionService.localService.initialize();
+    return { success: true };
+  } catch (error) {
+    Logger.error('Error downloading model:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 ipcMain.on('close-settings', () => {

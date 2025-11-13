@@ -4,21 +4,52 @@ const fs = require('fs');
 const path = require('path');
 const Config = require('./config');
 const Logger = require('./logger');
+const LocalTranscriptionService = require('./localTranscription');
 
 class TranscriptionService {
   constructor() {
     this.apiUrl = 'https://api.openai.com/v1/audio/transcriptions';
+    this.localService = new LocalTranscriptionService();
     Logger.log('TranscriptionService initialized, API URL:', this.apiUrl);
   }
 
   /**
-   * Transcribe audio file using OpenAI Whisper API
+   * Transcribe audio file using OpenAI Whisper API (online mode)
    * @param {string} audioFilePath - Path to the audio file
    * @returns {Promise<string>} - Transcribed text
    */
   async transcribe(audioFilePath) {
+    const transcriptionMode = Config.getTranscriptionMode();
+    
+    Logger.log(`Transcription mode: ${transcriptionMode}`);
+    
+    // Route to appropriate service
+    if (transcriptionMode === 'offline') {
+      return await this.transcribeOffline(audioFilePath);
+    } else {
+      return await this.transcribeOnline(audioFilePath);
+    }
+  }
+
+  /**
+   * Transcribe audio file using local Whisper model (offline mode)
+   * @param {string} audioFilePath - Path to the audio file
+   * @returns {Promise<string>} - Transcribed text
+   */
+  async transcribeOffline(audioFilePath) {
+    Logger.log('Using offline transcription...');
+    return await this.localService.transcribe(audioFilePath);
+  }
+
+  /**
+   * Transcribe audio file using OpenAI Whisper API (online mode)
+   * @param {string} audioFilePath - Path to the audio file
+   * @returns {Promise<string>} - Transcribed text
+   */
+  async transcribeOnline(audioFilePath) {
     const apiKey = Config.getApiKey();
     
+    Logger.log('Using online transcription...');
     Logger.log('Checking API key...');
     if (!apiKey) {
       Logger.error('No API key configured');
