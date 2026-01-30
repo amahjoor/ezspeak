@@ -20,6 +20,7 @@ let audioRecorder = null;
 let transcriptionService = null;
 let recordingStatus = 'idle'; // 'idle', 'recording', 'processing'
 let isRecording = false;
+let recordingStartTimeMs = null;
 
 
 function createRecordingIndicator() {
@@ -51,24 +52,25 @@ function createRecordingIndicator() {
   recordingIndicator.setIgnoreMouseEvents(false); // Allow dragging
 }
 
-function showRecordingIndicator() {
+function setIndicatorState(state, payload = {}) {
+  const script = `if (window.setIndicatorState) window.setIndicatorState(${JSON.stringify(state)}, ${JSON.stringify(payload)});`;
+
   if (recordingIndicator && !recordingIndicator.isDestroyed()) {
+    recordingIndicator.webContents.executeJavaScript(script);
+    if (state === 'hidden') {
+      recordingIndicator.hide();
+      return;
+    }
     recordingIndicator.showInactive(); // Show without stealing focus
-    // Trigger timer reset by sending a message to reload the page
-    recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
   } else {
+    if (state === 'hidden') {
+      return;
+    }
     createRecordingIndicator();
     recordingIndicator.once('ready-to-show', () => {
       recordingIndicator.showInactive(); // Show without stealing focus
-      // Trigger timer start after window is shown
-      recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
+      recordingIndicator.webContents.executeJavaScript(script);
     });
-  }
-}
-
-function hideRecordingIndicator() {
-  if (recordingIndicator && !recordingIndicator.isDestroyed()) {
-    recordingIndicator.hide();
   }
 }
 
@@ -182,6 +184,11 @@ async function initializeServices() {
 async function handleRecordStart() {
   Logger.log('handleRecordStart called');
   
+  if (recordingStatus === 'processing') {
+    Logger.warn('Transcription in progress, ignoring start request');
+    return;
+  }
+
   if (isRecording) {
     Logger.warn('Already recording, ignoring start request');
     return;
@@ -198,7 +205,8 @@ async function handleRecordStart() {
     isRecording = true;
     recordingStatus = 'recording';
     updateTrayMenu();
-    showRecordingIndicator(); // Show visual indicator
+    recordingStartTimeMs = Date.now();
+    setIndicatorState('recording');
     
     await audioRecorder.startRecording();
     Logger.success('Recording started successfully');
@@ -207,7 +215,8 @@ async function handleRecordStart() {
     isRecording = false;
     recordingStatus = 'idle';
     updateTrayMenu();
-    hideRecordingIndicator();
+    recordingStartTimeMs = null;
+    setIndicatorState('hidden');
   }
 }
 
@@ -221,10 +230,13 @@ async function handleRecordStop() {
 
   try {
     Logger.recording('Stopping recording...');
-    hideRecordingIndicator(); // Hide indicator immediately
     recordingStatus = 'processing';
     updateTrayMenu();
     isRecording = false;
+
+    const recordedMs = recordingStartTimeMs !== null ? Math.max(Date.now() - recordingStartTimeMs, 0) : null;
+    recordingStartTimeMs = null;
+    setIndicatorState('transcribing', recordedMs !== null ? { recordedMs } : {});
 
     const audioFilePath = await audioRecorder.stopRecording();
     Logger.success('Recording stopped, file:', audioFilePath);
@@ -246,7 +258,7 @@ async function handleRecordStop() {
     if (transcribedText && transcribedText.trim().length > 0) {
       // Auto-paste the transcribed text
       Logger.log('Auto-pasting text...');
-      await ClipboardManager.autoPaste(transcribedText.trim());
+      await ClipboardManager.autoPaste(transcribedText.trim(), { preserveClipboard: true });
       Logger.success('Text pasted successfully!');
     } else {
       Logger.warn('No text to paste (empty transcription)');
@@ -254,6 +266,7 @@ async function handleRecordStop() {
 
     recordingStatus = 'idle';
     updateTrayMenu();
+    setIndicatorState('hidden');
   } catch (error) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
     const errorStack = error?.stack || 'No stack trace available';
@@ -264,7 +277,7 @@ async function handleRecordStop() {
     
     recordingStatus = 'idle';
     updateTrayMenu();
-    hideRecordingIndicator();
+    setIndicatorState('hidden');
     
     // Send error to renderer if settings window is open
     if (settingsWindow && !settingsWindow.isDestroyed()) {

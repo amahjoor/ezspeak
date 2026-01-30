@@ -6,12 +6,14 @@ class ClipboardManager {
   /**
    * Automatically paste text at the current cursor position
    * @param {string} text - The text to paste
+   * @param {object} [options]
+   * @param {boolean} [options.preserveClipboard=false] - Keep transcription in clipboard after paste
    */
-  static async autoPaste(text) {
+  static async autoPaste(text, options = {}) {
+    const { preserveClipboard = false } = options;
+    const originalClipboard = preserveClipboard ? null : clipboard.readText();
+
     try {
-      // Save current clipboard content
-      const originalClipboard = clipboard.readText();
-      
       // Copy text to clipboard
       clipboard.writeText(text);
       
@@ -22,14 +24,19 @@ class ClipboardManager {
       await keyboard.pressKey(modifierKey, Key.V);
       await keyboard.releaseKey(modifierKey, Key.V);
       
-      // Restore original clipboard after a short delay
-      setTimeout(() => {
-        clipboard.writeText(originalClipboard);
-      }, 500);
+      if (!preserveClipboard) {
+        // Restore original clipboard after a short delay
+        setTimeout(() => {
+          clipboard.writeText(originalClipboard);
+        }, 500);
+      }
       
       return true;
     } catch (error) {
       console.error('Error in auto-paste:', error);
+      if (!preserveClipboard && originalClipboard !== null) {
+        clipboard.writeText(originalClipboard);
+      }
       return false;
     }
   }
