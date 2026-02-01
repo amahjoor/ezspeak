@@ -24,7 +24,7 @@ class LocalTranscriptionService {
     try {
       const { app } = require('electron');
       const modelsDir = path.join(app.getPath('userData'), 'whisper-models');
-      
+
       // Ensure models directory exists
       if (!fs.existsSync(modelsDir)) {
         fs.mkdirSync(modelsDir, { recursive: true });
@@ -32,7 +32,7 @@ class LocalTranscriptionService {
       }
 
       this.modelPath = path.join(modelsDir, `ggml-${this.modelName}.bin`);
-      
+
       // Check if model exists
       if (!fs.existsSync(this.modelPath)) {
         Logger.log('Model not found, copying from bundle...');
@@ -99,34 +99,34 @@ class LocalTranscriptionService {
     // Check if FFmpeg is inside app.asar (packaged build)
     if (ffmpegPath.includes('app.asar')) {
       Logger.log('FFmpeg is inside app.asar, extracting...');
-      
+
       try {
         const { app } = require('electron');
         const userDataPath = app.getPath('userData');
         const ffmpegDir = path.join(userDataPath, 'ffmpeg');
         const extractedPath = path.join(ffmpegDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
-        
+
         // Create directory if it doesn't exist
         if (!fs.existsSync(ffmpegDir)) {
           fs.mkdirSync(ffmpegDir, { recursive: true });
         }
-        
+
         // Extract FFmpeg if not already extracted
         if (!fs.existsSync(extractedPath)) {
           Logger.log('Extracting FFmpeg to:', extractedPath);
           const ffmpegBuffer = fs.readFileSync(ffmpegPath);
           fs.writeFileSync(extractedPath, ffmpegBuffer);
-          
+
           // Make executable on Unix systems
           if (process.platform !== 'win32') {
             fs.chmodSync(extractedPath, 0o755);
           }
-          
+
           Logger.success('FFmpeg extracted successfully');
         } else {
           Logger.log('FFmpeg already extracted');
         }
-        
+
         this.ffmpegPath = extractedPath;
         return extractedPath;
       } catch (error) {
@@ -202,7 +202,7 @@ class LocalTranscriptionService {
 
       const stats = fs.statSync(audioFilePath);
       Logger.log(`Transcribing locally: ${path.basename(audioFilePath)}, Size: ${(stats.size / 1024).toFixed(2)} KB`);
-      
+
       if (!fs.existsSync(this.modelPath)) {
         throw new Error('Whisper model not found. Please ensure the model is downloaded.');
       }
@@ -213,11 +213,11 @@ class LocalTranscriptionService {
       // Use whisper.cpp CLI
       Logger.log('Starting local transcription with whisper.cpp binary...');
       const result = await this.transcribeWithWhisperBinary(wavPath);
-      
+
       Logger.log('Transcription result received:', typeof result);
-      
+
       let transcribedText = '';
-      
+
       if (Array.isArray(result)) {
         // whisper-node returns array of {start, end, speech} objects
         transcribedText = result.map(segment => segment.speech).join(' ').trim();
@@ -284,7 +284,7 @@ class LocalTranscriptionService {
 
         // Set working directory to whisper-bin so DLLs can be found
         const binaryDir = path.dirname(binaryPath);
-        
+
         const whisperProcess = spawn(binaryPath, args, {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: binaryDir,  // Set working directory so DLLs are found
@@ -309,7 +309,11 @@ class LocalTranscriptionService {
             let transcription = '';
             if (fs.existsSync(txtPath)) {
               try {
-                transcription = fs.readFileSync(txtPath, 'utf8').trim();
+                // Read text and replace newlines with spaces to prevent hard wrapping
+                transcription = fs.readFileSync(txtPath, 'utf8')
+                  .replace(/[\r\n]+/g, ' ') // Replace line breaks with spaces
+                  .replace(/\s+/g, ' ')      // Collapse multiple spaces
+                  .trim();
               } catch (e) {
                 Logger.warn('Failed reading generated txt file, falling back to stdout');
               }
@@ -345,7 +349,7 @@ class LocalTranscriptionService {
   async ensureWhisperBinary() {
     const fs = require('fs');
     const path = require('path');
-    
+
     // In production, extraResources are in process.resourcesPath
     // In development, they're in the project root
     let binaryDir;
@@ -366,7 +370,7 @@ class LocalTranscriptionService {
         binaryDir = path.join(__dirname, '..', 'whisper-bin');
       }
     }
-    
+
     Logger.log('Looking for whisper binary in:', binaryDir);
     Logger.log('process.resourcesPath:', process.resourcesPath);
     Logger.log('__dirname:', __dirname);
@@ -376,14 +380,14 @@ class LocalTranscriptionService {
     if (!fs.existsSync(binaryDir)) {
       Logger.error('Whisper binary directory does not exist:', binaryDir);
       Logger.log('Trying alternative paths...');
-      
+
       // Try alternative paths
       const alternatives = [
         path.join(process.resourcesPath || '', 'whisper-bin'),
         path.join(__dirname, '..', 'whisper-bin'),
         path.join(process.cwd(), 'whisper-bin')
       ];
-      
+
       // Try to get app path if available
       try {
         const { app } = require('electron');
@@ -393,7 +397,7 @@ class LocalTranscriptionService {
       } catch (e) {
         // Ignore if app not available
       }
-      
+
       for (const altPath of alternatives) {
         Logger.log('Checking alternative:', altPath);
         if (fs.existsSync(altPath)) {

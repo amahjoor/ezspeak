@@ -8,5 +8,4 @@ build/
 temp_audio/
 .npm
 .electron-gyp
-website/
 whisper-models/
