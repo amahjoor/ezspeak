@@ -9,3 +9,4 @@ temp_audio/
 .npm
 .electron-gyp
 whisper-models/
+llm-models/

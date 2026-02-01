@@ -1,6 +1,6 @@
 {
   "name": "ezspeak",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Voice-to-text transcription with global hotkey activation",
   "main": "main.js",
   "scripts": {
@@ -27,6 +27,7 @@
     "electron-store": "^8.1.0",
     "ffmpeg-static": "^5.2.0",
     "form-data": "^4.0.0",
+    "node-llama-cpp": "^3.15.1",
     "uiohook-napi": "^1.5.4"
   },
   "build": {
@@ -49,6 +50,13 @@
       {
         "from": "whisper-models",
         "to": "whisper-models",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "llm-models",
+        "to": "llm-models",
         "filter": [
           "**/*"
         ]

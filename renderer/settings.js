@@ -131,10 +131,14 @@ async function loadSettings() {
         const apiKey = await window.electronAPI.getApiKey();
         const hotkey = await window.electronAPI.getHotkey();
         const transcriptionMode = await window.electronAPI.getTranscriptionMode();
+        const launchAtStartup = await window.electronAPI.getLaunchAtStartup();
+        const llmPostProcessing = await window.electronAPI.getLlmPostProcessing();
 
         const apiKeyInput = document.getElementById('apiKey');
         const hotkeyInput = document.getElementById('hotkey');
         const providerSelect = document.getElementById('transcriptionProvider');
+        const launchAtStartupCheckbox = document.getElementById('launchAtStartup');
+        const llmPostProcessingCheckbox = document.getElementById('llmPostProcessing');
 
         if (apiKeyInput) {
             apiKeyInput.value = apiKey || '';
@@ -152,6 +156,11 @@ async function loadSettings() {
         if (providerSelect) {
             providerSelect.value = transcriptionMode || 'online';
             updateProviderUI(transcriptionMode || 'online');
+        }
+
+        // Set launch at startup checkbox
+        if (launchAtStartupCheckbox) {
+            launchAtStartupCheckbox.checked = launchAtStartup || false;
         }
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -479,6 +488,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup model download
     setupModelDownload();
+
+    // Setup launch at startup toggle
+    const launchAtStartupCheckbox = document.getElementById('launchAtStartup');
+    if (launchAtStartupCheckbox) {
+        launchAtStartupCheckbox.addEventListener('change', async () => {
+            try {
+                await window.electronAPI.setLaunchAtStartup(launchAtStartupCheckbox.checked);
+                showToast(launchAtStartupCheckbox.checked ? 'Will launch at startup' : 'Startup launch disabled');
+            } catch (error) {
+                console.error('Error setting launch at startup:', error);
+            }
+        });
+    }
+
+
 
     // Auto-save API key on Enter or blur (when user clicks away)
     if (apiKeyInput) {

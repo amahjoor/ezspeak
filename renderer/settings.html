@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ezspeak</title>
     <link rel="stylesheet" href="settings.css">
 </head>
+
 <body>
     <div class="titlebar">
         <div class="titlebar-drag-region">
@@ -14,12 +16,12 @@
         <div class="window-controls">
             <button class="window-control" id="minimize-btn" title="Minimize">
                 <svg width="10" height="10" viewBox="0 0 10 10">
-                    <path d="M 0,5 10,5" stroke="currentColor" stroke-width="1"/>
+                    <path d="M 0,5 10,5" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
             <button class="window-control" id="close-btn" title="Close">
                 <svg width="10" height="10" viewBox="0 0 10 10">
-                    <path d="M 0,0 10,10 M 10,0 0,10" stroke="currentColor" stroke-width="1"/>
+                    <path d="M 0,0 10,10 M 10,0 0,10" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
         </div>
@@ -37,47 +39,52 @@
                         <option value="online">OpenAI Whisper API</option>
                         <option value="offline">Local (Offline)</option>
                     </select>
-                    
+
                     <!-- API Key input - shown only for online mode -->
                     <div class="provider-input" id="apiKeyContainer">
-                        <input 
-                            type="password" 
-                            id="apiKey" 
-                            placeholder="sk-..." 
-                            autocomplete="off"
-                        />
+                        <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
                         <button type="button" class="toggle-visibility" id="toggleVisibility">
-                            <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            <svg class="eye-off-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <svg class="eye-off-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" style="display: none;">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                </path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                             </svg>
                         </button>
                     </div>
-                    
+
                     <!-- Download icon box - shown only for offline mode when model not downloaded -->
-                    <button type="button" class="download-icon-box" id="downloadModelBtn" style="display: none;" title="Download model (~150MB)">
-                        <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button type="button" class="download-icon-box" id="downloadModelBtn" style="display: none;"
+                        title="Download model (~150MB)">
+                        <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <svg class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display: none;">
+                        <svg class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display: none;">
                             <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
                             <path d="M12 2a10 10 0 0 1 10 10" opacity="1">
-                                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12"
+                                    dur="1s" repeatCount="indefinite" />
                             </path>
                         </svg>
                     </button>
                 </div>
-                
+
                 <!-- Dynamic help text -->
                 <p class="help-text" id="providerHelp">
-                    <span id="helpOnline">Uses OpenAI's cloud API. Requires API key and internet connection. <a href="https://platform.openai.com/api-keys" target="_blank">Get API key</a></span>
-                    <span id="helpOffline" style="display: none;">Runs locally on your device. Private and works offline. Click download button to get the ~150MB model.</span>
+                    <span id="helpOnline">Uses OpenAI's cloud API. Requires API key and internet connection. <a
+                            href="https://platform.openai.com/api-keys" target="_blank">Get API key</a></span>
+                    <span id="helpOffline" style="display: none;">Runs locally on your device. Private and works
+                        offline.</span>
                 </p>
             </div>
 
@@ -90,16 +97,26 @@
 
             <div class="form-group">
                 <label for="hotkey">Recording Hotkey</label>
-                <input 
-                    type="text" 
-                    id="hotkey" 
-                    placeholder="Click and press any key..."
-                    readonly
-                />
+                <input type="text" id="hotkey" placeholder="Click and press any key..." readonly />
                 <p class="help-text" style="color: #858585; font-size: 12px; margin-top: 6px;">
                     Click the field and press any key to set it as your recording hotkey
                 </p>
             </div>
+
+            <div class="form-group toggle-group">
+                <div class="toggle-row">
+                    <label for="launchAtStartup">Launch at Startup</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="launchAtStartup">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <p class="help-text" style="color: #858585; font-size: 12px; margin-top: 6px;">
+                    Automatically start ezspeak when Windows starts
+                </p>
+            </div>
+
+
         </div>
 
         <div class="toast" id="toast">Changes saved</div>
@@ -109,5 +126,5 @@
     <script src="recording.js"></script>
     <script src="settings.js"></script>
 </body>
-</html>
 
+</html>

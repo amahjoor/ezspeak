@@ -21,6 +21,23 @@ let transcriptionService = null;
 let recordingStatus = 'idle'; // 'idle', 'recording', 'processing'
 let isRecording = false;
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  return;
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (settingsWindow) {
+    if (settingsWindow.isMinimized()) settingsWindow.restore();
+    settingsWindow.show();
+    settingsWindow.focus();
+  } else {
+    showSettingsWindow();
+  }
+});
+
 
 function createRecordingIndicator() {
   const { screen } = require('electron');
@@ -348,6 +365,42 @@ ipcMain.handle('download-model', async () => {
     Logger.error('Error downloading model:', error);
     return { success: false, error: error.message };
   }
+});
+
+ipcMain.handle('get-launch-at-startup', () => {
+  return Config.getLaunchAtStartup();
+});
+
+ipcMain.handle('set-launch-at-startup', (event, enabled) => {
+  Config.setLaunchAtStartup(enabled);
+
+  if (!app.isPackaged) {
+    // In development: launch electron binary with app path as argument
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      path: process.execPath,
+      args: [path.resolve(__dirname)]
+    });
+  } else {
+    // In production: launch the packaged executable directly
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      path: app.getPath('exe')
+    });
+  }
+
+  Logger.log(`Launch at startup ${enabled ? 'enabled' : 'disabled'} (Packaged: ${app.isPackaged})`);
+  return true;
+});
+
+ipcMain.handle('get-llm-post-processing', () => {
+  return Config.getLlmPostProcessing();
+});
+
+ipcMain.handle('set-llm-post-processing', (event, enabled) => {
+  Config.setLlmPostProcessing(enabled);
+  Logger.log(`LLM post-processing ${enabled ? 'enabled' : 'disabled'}`);
+  return true;
 });
 
 ipcMain.on('close-settings', () => {

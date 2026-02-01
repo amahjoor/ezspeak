@@ -11,7 +11,9 @@ const store = new Store({
     sampleRate: 16000,
     channels: 1,
     bitDepth: 16,
-    transcriptionMode: 'online' // 'online' or 'offline'
+    transcriptionMode: 'online', // 'online' or 'offline'
+    launchAtStartup: false,
+    llmPostProcessing: true // Clean up transcription with LLM (requires API key)
   }
 });
 
@@ -66,6 +68,22 @@ class Config {
     if (mode === 'online' || mode === 'offline') {
       store.set('transcriptionMode', mode);
     }
+  }
+
+  static getLaunchAtStartup() {
+    return store.get('launchAtStartup', false);
+  }
+
+  static setLaunchAtStartup(enabled) {
+    store.set('launchAtStartup', enabled);
+  }
+
+  static getLlmPostProcessing() {
+    return store.get('llmPostProcessing', true);
+  }
+
+  static setLlmPostProcessing(enabled) {
+    store.set('llmPostProcessing', enabled);
   }
 
   static isConfigured() {

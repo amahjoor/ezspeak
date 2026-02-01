@@ -6,7 +6,7 @@ const Logger = require('./logger');
 class LocalTranscriptionService {
   constructor() {
     this.modelPath = null;
-    this.modelName = 'base.en'; // Default model
+    this.modelName = 'small.en'; // Default model (better accuracy than base)
     this.isInitialized = false;
     this.ffmpegPath = null; // Cache for extracted FFmpeg path
     Logger.log('LocalTranscriptionService initialized');
@@ -39,6 +39,22 @@ class LocalTranscriptionService {
         await this.copyBundledModel(modelsDir);
       } else {
         Logger.success('Local Whisper model found:', this.modelPath);
+      }
+
+      // Clean up old models (e.g., base.en after upgrading to small.en)
+      const oldModels = ['base.en'];
+      for (const oldModel of oldModels) {
+        if (oldModel !== this.modelName) {
+          const oldPath = path.join(modelsDir, `ggml-${oldModel}.bin`);
+          if (fs.existsSync(oldPath)) {
+            try {
+              fs.unlinkSync(oldPath);
+              Logger.log(`Cleaned up old model: ${oldModel}`);
+            } catch (e) {
+              Logger.warn(`Could not delete old model ${oldModel}:`, e.message);
+            }
+          }
+        }
       }
 
       this.isInitialized = true;
