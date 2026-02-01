@@ -5,7 +5,7 @@ import GitHubStars from '@/components/GitHubStars'
  * GitHub download URL for the latest release
  * Update this value to change all download links across the website
  */
-const GITHUB_DOWNLOAD_URL = 'https://github.com/amahjoor/ezspeak/releases/download/v1.0.3/ezspeak.Setup.1.0.3.exe'
+const GITHUB_DOWNLOAD_URL = 'https://github.com/amahjoor/ezspeak/releases/download/v1.0.4/ezspeak.Setup.1.0.4.exe'
 
 export default function Home() {
   return (

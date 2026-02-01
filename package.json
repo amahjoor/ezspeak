@@ -35,7 +35,8 @@
     "forceCodeSigning": false,
     "files": [
       "**/*",
-      "!whisper-bin/**/*"
+      "!whisper-bin/**/*",
+      "!website/**/*"
     ],
     "extraResources": [
       {
