@@ -11,22 +11,20 @@ class ClipboardManager {
     try {
       // Save current clipboard content
       const originalClipboard = clipboard.readText();
-      
+
       // Copy text to clipboard
       clipboard.writeText(text);
-      
+
       // Use Cmd+V on macOS, Ctrl+V on Windows/Linux
       const isMac = os.platform() === 'darwin';
       const modifierKey = isMac ? Key.LeftSuper : Key.LeftControl;
-      
+
       await keyboard.pressKey(modifierKey, Key.V);
       await keyboard.releaseKey(modifierKey, Key.V);
-      
-      // Restore original clipboard after a short delay
-      setTimeout(() => {
-        clipboard.writeText(originalClipboard);
-      }, 500);
-      
+
+      // Removed original clipboard restoration to keep the transcribed text
+      // This allows the user to paste the text again if needed
+
       return true;
     } catch (error) {
       console.error('Error in auto-paste:', error);

@@ -69,6 +69,14 @@ function showRecordingIndicator() {
 function hideRecordingIndicator() {
   if (recordingIndicator && !recordingIndicator.isDestroyed()) {
     recordingIndicator.hide();
+    // Reset to recording mode for next use
+    recordingIndicator.webContents.executeJavaScript('if (typeof setRecordingMode === "function") setRecordingMode();');
+  }
+}
+
+function setIndicatorTranscribing() {
+  if (recordingIndicator && !recordingIndicator.isDestroyed()) {
+    recordingIndicator.webContents.executeJavaScript('if (typeof setTranscribingMode === "function") setTranscribingMode();');
   }
 }
 
@@ -113,7 +121,7 @@ function updateTrayMenu() {
       }
     }
   ]);
-  
+
   tray.setContextMenu(contextMenu);
   tray.setToolTip('ezspeak - Voice to Text');
 }
@@ -135,7 +143,7 @@ function createSettingsWindow() {
   });
 
   settingsWindow.loadFile('renderer/settings.html');
-  
+
   // Enable DevTools - can be opened with F12 or Ctrl+Shift+I
   // Always enable for debugging (can be disabled in production later)
   settingsWindow.webContents.on('before-input-event', (event, input) => {
@@ -143,7 +151,7 @@ function createSettingsWindow() {
       settingsWindow.webContents.toggleDevTools();
     }
   });
-  
+
   // Open DevTools in dev mode automatically
   if (process.argv.includes('--dev')) {
     settingsWindow.webContents.openDevTools({ mode: 'detach' });
@@ -167,10 +175,10 @@ function showSettingsWindow() {
 
 async function initializeServices() {
   const { globalShortcut } = require('electron');
-  
+
   audioRecorder = new AudioRecorder();
   transcriptionService = new TranscriptionService();
-  
+
   // Initialize hotkey manager
   hotkeyManager = new HotkeyManager(
     handleRecordStart,
@@ -181,7 +189,7 @@ async function initializeServices() {
 
 async function handleRecordStart() {
   Logger.log('handleRecordStart called');
-  
+
   if (isRecording) {
     Logger.warn('Already recording, ignoring start request');
     return;
@@ -199,7 +207,7 @@ async function handleRecordStart() {
     recordingStatus = 'recording';
     updateTrayMenu();
     showRecordingIndicator(); // Show visual indicator
-    
+
     await audioRecorder.startRecording();
     Logger.success('Recording started successfully');
   } catch (error) {
@@ -213,7 +221,7 @@ async function handleRecordStart() {
 
 async function handleRecordStop() {
   Logger.log('handleRecordStop called');
-  
+
   if (!isRecording) {
     Logger.warn('Not recording, ignoring stop request');
     return;
@@ -221,14 +229,14 @@ async function handleRecordStop() {
 
   try {
     Logger.recording('Stopping recording...');
-    hideRecordingIndicator(); // Hide indicator immediately
+    setIndicatorTranscribing(); // Switch to transcribing mode instead of hiding
     recordingStatus = 'processing';
     updateTrayMenu();
     isRecording = false;
 
     const audioFilePath = await audioRecorder.stopRecording();
     Logger.success('Recording stopped, file:', audioFilePath);
-    
+
     // Check file size
     const stats = require('fs').statSync(audioFilePath);
     const fileSizeKB = (stats.size / 1024).toFixed(2);
@@ -252,20 +260,21 @@ async function handleRecordStop() {
       Logger.warn('No text to paste (empty transcription)');
     }
 
+    hideRecordingIndicator(); // Hide indicator after completion
     recordingStatus = 'idle';
     updateTrayMenu();
   } catch (error) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
     const errorStack = error?.stack || 'No stack trace available';
-    
+
     Logger.error('Error in recording/transcription:', errorMessage);
     Logger.error('Full error object:', error);
     Logger.error('Stack:', errorStack);
-    
+
     recordingStatus = 'idle';
     updateTrayMenu();
     hideRecordingIndicator();
-    
+
     // Send error to renderer if settings window is open
     if (settingsWindow && !settingsWindow.isDestroyed()) {
       try {
@@ -306,14 +315,14 @@ ipcMain.handle('get-hotkey', () => {
 
 ipcMain.handle('set-hotkey', async (event, hotkey) => {
   Config.setHotkey(hotkey);
-  
+
   // Restart hotkey monitoring with new key
   if (hotkeyManager) {
     Logger.log(`Changing hotkey to ${hotkey}, restarting monitoring...`);
     hotkeyManager.stopMonitoring();
     await hotkeyManager.startMonitoring();
   }
-  
+
   return true;
 });
 
@@ -376,26 +385,26 @@ process.on('unhandledRejection', (reason, promise) => {
 app.whenReady().then(async () => {
   Logger.init(); // Initialize file logging
   Logger.log('App ready, initializing...');
-  
+
   // Force dark mode for window chrome
   nativeTheme.themeSource = 'dark';
-  
+
   createTray();
   Logger.success('System tray created');
-  
+
   createRecordingIndicator(); // Pre-create indicator
   Logger.success('Recording indicator created');
-  
+
   await initializeServices();
   Logger.success('Services initialized');
-  
+
   // Start monitoring for hotkey
   await hotkeyManager.startMonitoring();
-  
+
   // Create settings window (needed for audio recording) but don't show it initially
   createSettingsWindow();
   Logger.success('Settings window created');
-  
+
   // Only show settings window if not configured (first time setup)
   if (!Config.isConfigured()) {
     settingsWindow.show();
@@ -403,7 +412,7 @@ app.whenReady().then(async () => {
   } else {
     Logger.log('App running in background - use tray icon to open settings');
   }
-  
+
   console.log('\n========================================');
   console.log('   ezspeak is ready!');
   console.log('========================================\n');
