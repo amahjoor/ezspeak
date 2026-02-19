@@ -339,6 +339,14 @@ ipcMain.handle('set-hotkey', async (event, hotkey) => {
   return true;
 });
 
+ipcMain.on('pause-hotkey', () => {
+  if (hotkeyManager) hotkeyManager.pauseMonitoring();
+});
+
+ipcMain.on('resume-hotkey', () => {
+  if (hotkeyManager) hotkeyManager.resumeMonitoring();
+});
+
 ipcMain.handle('get-transcription-mode', () => {
   return Config.getTranscriptionMode();
 });

@@ -300,6 +300,9 @@ function setupHotkeyCapture() {
         // Clear previous state for a new capture session
         pressedKeys.clear();
         maxCombo.clear();
+        // Pause the global hotkey listener so pressing the current hotkey
+        // doesn't trigger recording while the user is setting a new one
+        window.electronAPI.pauseHotkey();
     });
 
     hotkeyInput.addEventListener('keydown', (e) => {
@@ -370,7 +373,9 @@ function setupHotkeyCapture() {
         const combo = sortedKeys.join('+');
 
         try {
+            // setHotkey restarts monitoring in main; resumeHotkey clears the paused flag
             await window.electronAPI.setHotkey(combo);
+            window.electronAPI.resumeHotkey();
 
             const displayName = sortedKeys
                 .map(part => keyDisplayNames[part] || part)
@@ -380,6 +385,7 @@ function setupHotkeyCapture() {
             showToast('Hotkey saved');
         } catch (error) {
             console.error('Error setting hotkey:', error);
+            window.electronAPI.resumeHotkey();
             hotkeyInput.value = 'Error - try again';
         }
     }
@@ -398,12 +404,13 @@ function setupHotkeyCapture() {
     // Handle blur (click away)
     hotkeyInput.addEventListener('blur', async () => {
         if (isCapturing) {
-            // If capturing and blur happens, cancel capture and revert to current saved hotkey
+            // Capture cancelled — resume hotkey monitoring and revert display
             isCapturing = false;
             pressedKeys.clear();
             maxCombo.clear();
             hotkeyInput.style.borderColor = '#3e3e42';
             hotkeyInput.style.background = '#252526';
+            window.electronAPI.resumeHotkey();
             const current = await window.electronAPI.getHotkey();
             hotkeyInput.style.borderColor = '#3e3e42';
             hotkeyInput.style.background = '#252526';
@@ -549,6 +556,7 @@ async function loadAndRenderHistory() {
         card.innerHTML = `
             <div class="history-entry-meta">
                 <span class="history-entry-date">No transcriptions yet</span>
+                <span class="history-copy-hint"></span>
             </div>
             <div class="history-entry-text history-entry-text--muted">Your transcription history will appear here</div>
         `;

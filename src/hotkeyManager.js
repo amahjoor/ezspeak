@@ -14,6 +14,7 @@ class HotkeyManager {
     this.keyDownTime = null;
     this.holdModeTimer = null;
     this.isMonitoring = false;
+    this.isPaused = false; // True while the settings UI is capturing a new hotkey
     this.registeredHotkey = null;
     this.uiohookStarted = false;
     this.isHoldMode = false; // Track if current recording is in hold mode
@@ -58,6 +59,7 @@ class HotkeyManager {
       Logger.log(`Parsed hotkey: ${JSON.stringify(this.targetHotkey)}`);
 
       uIOhook.on('keydown', (e) => {
+        if (this.isPaused) return;
         this.pressedKeys.add(e.keycode);
 
         // Check if combination is met
@@ -67,6 +69,10 @@ class HotkeyManager {
       });
 
       uIOhook.on('keyup', (e) => {
+        if (this.isPaused) {
+          this.pressedKeys.delete(e.keycode);
+          return;
+        }
         // Stop recording if the main key or a required modifier is released
         // (If we were holding, releasing checks should happen here)
 
@@ -241,6 +247,32 @@ class HotkeyManager {
         }
       }
     }
+  }
+
+  /**
+   * Temporarily ignore hotkey events while the UI is capturing a new hotkey.
+   * uIOhook keeps running so we avoid the cost of stop/start.
+   */
+  pauseMonitoring() {
+    this.isPaused = true;
+    // Clear any in-progress press state so a half-registered keydown
+    // during capture doesn't bleed into the next real press
+    this.pressedKeys.clear();
+    this.keyDownTime = null;
+    if (this.holdModeTimer) {
+      clearTimeout(this.holdModeTimer);
+      this.holdModeTimer = null;
+    }
+    Logger.log('Hotkey monitoring paused (capturing new hotkey)');
+  }
+
+  /**
+   * Resume normal hotkey handling after the UI finishes capturing.
+   */
+  resumeMonitoring() {
+    this.pressedKeys.clear(); // discard any keys pressed during capture
+    this.isPaused = false;
+    Logger.log('Hotkey monitoring resumed');
   }
 
   /**

@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeSettings: () => ipcRenderer.send('close-settings'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   openExternal: (url) => ipcRenderer.send('open-external', url),
+  pauseHotkey: () => ipcRenderer.send('pause-hotkey'),
+  resumeHotkey: () => ipcRenderer.send('resume-hotkey'),
   // History
   getHistory: () => ipcRenderer.invoke('get-history'),
   clearHistory: () => ipcRenderer.invoke('clear-history'),
