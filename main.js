@@ -24,14 +24,16 @@ let isRecording = false;
 
 function createRecordingIndicator() {
   const { screen } = require('electron');
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width } = primaryDisplay.workAreaSize;
+  // Use the display where the user's cursor is, not necessarily the primary
+  const cursorPos = screen.getCursorScreenPoint();
+  const activeDisplay = screen.getDisplayNearestPoint(cursorPos);
+  const { x: displayX, y: displayY, width } = activeDisplay.bounds;
 
   recordingIndicator = new BrowserWindow({
     width: 180,
     height: 50,
-    x: Math.floor(width / 2 - 90), // Center horizontally
-    y: 20, // 20px from top
+    x: Math.floor(displayX + width / 2 - 90), // Center on active display
+    y: displayY + 20, // 20px from top of active display
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -47,18 +49,34 @@ function createRecordingIndicator() {
     }
   });
 
+  // On Windows, use a higher z-order level so the overlay isn't hidden
+  // behind elevated or fullscreen windows. noop on macOS.
+  if (process.platform === 'win32') {
+    recordingIndicator.setAlwaysOnTop(true, 'pop-up-menu');
+  }
+
   recordingIndicator.loadFile('renderer/recording-indicator.html');
   recordingIndicator.setIgnoreMouseEvents(false); // Allow dragging
 }
 
 function showRecordingIndicator() {
   if (recordingIndicator && !recordingIndicator.isDestroyed()) {
+    // Reposition to the display where the cursor currently is
+    const { screen } = require('electron');
+    const cursorPos = screen.getCursorScreenPoint();
+    const activeDisplay = screen.getDisplayNearestPoint(cursorPos);
+    const { x: displayX, y: displayY, width } = activeDisplay.bounds;
+    recordingIndicator.setPosition(
+      Math.floor(displayX + width / 2 - 90),
+      displayY + 20
+    );
     recordingIndicator.showInactive(); // Show without stealing focus
-    // Trigger timer reset by sending a message to reload the page
+    // Trigger timer reset
     recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
   } else {
     createRecordingIndicator();
-    recordingIndicator.once('ready-to-show', () => {
+    // Use did-finish-load for reliability — ready-to-show can miss when show:false
+    recordingIndicator.webContents.once('did-finish-load', () => {
       recordingIndicator.showInactive(); // Show without stealing focus
       // Trigger timer start after window is shown
       recordingIndicator.webContents.executeJavaScript('if (typeof startTimer === "function") startTimer();');
