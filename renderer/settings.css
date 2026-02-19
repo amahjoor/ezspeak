@@ -514,24 +514,6 @@ kbd {
     padding: 0 30px 20px;
 }
 
-/* ─── Empty state ───────────────────────────────────────────────── */
-.history-empty {
-    padding: 16px 0 0;
-    color: #4e4e52;
-}
-
-.history-empty p {
-    margin: 0;
-    font-size: 13px;
-    color: #4e4e52;
-}
-
-.history-empty-sub {
-    font-size: 12px !important;
-    color: #3e3e42 !important;
-    margin-top: 4px !important;
-}
-
 /* ─── History entry ─────────────────────────────────────────────── */
 .history-entry {
     background: #252526;
@@ -556,6 +538,20 @@ kbd {
 
 .history-entry:active {
     transform: scale(0.995);
+}
+
+/* Empty card — same visual as a real entry but non-interactive */
+.history-empty-card {
+    cursor: default;
+}
+
+.history-empty-card:hover {
+    background: #252526;
+    border-color: #2d2d30;
+}
+
+.history-empty-card:active {
+    transform: none;
 }
 
 /* Flash animation on copy */
@@ -600,4 +596,8 @@ kbd {
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
+}
+
+.history-entry-text--muted {
+    color: #4e4e52;
 }

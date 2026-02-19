@@ -524,7 +524,6 @@ function formatHistoryDate(isoString) {
 
 async function loadAndRenderHistory() {
     const list = document.getElementById('historyList');
-    const empty = document.getElementById('historyEmpty');
     const countEl = document.getElementById('historyCount');
     if (!list) return;
 
@@ -541,15 +540,21 @@ async function loadAndRenderHistory() {
         countEl.textContent = n === 1 ? '1 transcription' : `${n} transcriptions`;
     }
 
-    // Remove any previously rendered entries (keep empty state node)
-    Array.from(list.querySelectorAll('.history-entry')).forEach(el => el.remove());
+    // Remove any previously rendered entries
+    Array.from(list.querySelectorAll('.history-entry, .history-empty-card')).forEach(el => el.remove());
 
     if (history.length === 0) {
-        if (empty) empty.style.display = 'flex';
+        const card = document.createElement('div');
+        card.className = 'history-entry history-empty-card';
+        card.innerHTML = `
+            <div class="history-entry-meta">
+                <span class="history-entry-date">No transcriptions yet</span>
+            </div>
+            <div class="history-entry-text history-entry-text--muted">Your transcription history will appear here</div>
+        `;
+        list.appendChild(card);
         return;
     }
-
-    if (empty) empty.style.display = 'none';
 
     history.forEach(entry => {
         const el = document.createElement('div');
