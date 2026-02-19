@@ -195,31 +195,42 @@ async function saveApiKey() {
         const apiKey = document.getElementById('apiKey').value.trim();
 
         if (!apiKey) {
-            return; // Don't save empty
+            return; // Field is empty — nothing to validate
         }
 
         if (!apiKey.startsWith('sk-')) {
-            return; // Invalid format, skip silently
+            showToast('Invalid API key — must start with sk-', 'error');
+            return;
         }
 
         await window.electronAPI.setApiKey(apiKey);
-        showToast('Changes saved');
+        showToast('API key saved');
     } catch (error) {
         console.error('Error saving API key:', error);
+        showToast('Failed to save API key', 'error');
     }
 }
 
 // Show toast notification
-function showToast(message) {
+// @param {string} message - Text to display
+// @param {'success'|'error'} [type='success'] - Visual variant
+function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
-    toast.textContent = message;
-    toast.classList.add('show');
+    // Clear any in-flight timer so back-to-back toasts restart cleanly
+    if (showToast._timer) {
+        clearTimeout(showToast._timer);
+    }
 
-    setTimeout(() => {
+    toast.textContent = message;
+    toast.classList.remove('toast--success', 'toast--error');
+    toast.classList.add(`toast--${type}`, 'show');
+
+    showToast._timer = setTimeout(() => {
         toast.classList.remove('show');
-    }, 1000);
+        showToast._timer = null;
+    }, type === 'error' ? 4000 : 1500);
 }
 
 // Toggle password visibility
@@ -479,6 +490,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup model download
     setupModelDownload();
+
+    // Surface transcription errors (e.g. invalid API key, network failure) as toasts
+    if (window.electronAPI.onError) {
+        window.electronAPI.onError((message) => {
+            showToast(message, 'error');
+        });
+    }
 
     // Auto-save API key on Enter or blur (when user clicks away)
     if (apiKeyInput) {

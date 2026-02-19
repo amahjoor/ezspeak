@@ -319,6 +319,18 @@ kbd {
     display: block;
 }
 
+.toast.toast--success {
+    background: #2d2d30;
+    border-color: #3e3e42;
+    color: #cccccc;
+}
+
+.toast.toast--error {
+    background: #3a1a1a;
+    border-color: #c0392b;
+    color: #f08080;
+}
+
 /* Provider container styles */
 .provider-container {
     display: flex;

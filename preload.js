@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onStopRecording: (callback) => {
     ipcRenderer.on('stop-recording', callback);
+  },
+  onError: (callback) => {
+    ipcRenderer.on('error', (event, message) => callback(message));
   }
 });
 
