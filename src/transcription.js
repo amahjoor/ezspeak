@@ -135,11 +135,19 @@ class TranscriptionService {
           throw new Error('Invalid API key. Please check your OpenAI API key in settings.');
         } else if (status === 429) {
           throw new Error('API rate limit exceeded. Please try again later.');
+        } else if (status === 400) {
+          throw new Error(`Audio could not be processed. Try speaking for longer or check your microphone. (${message})`);
+        } else if (status === 413) {
+          throw new Error('Recording is too large to upload (max 25MB). Try a shorter recording.');
+        } else if (status >= 500) {
+          throw new Error('OpenAI service error. Please try again in a moment.');
         } else {
-          throw new Error(`API Error: ${message}`);
+          throw new Error(`API Error ${status}: ${message}`);
         }
       } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Request timeout. Please check your internet connection.');
+        throw new Error('Request timed out. Please check your internet connection and try again.');
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw new Error('No internet connection. Check your network and try again.');
       } else {
         throw new Error(`Transcription failed: ${error.message}`);
       }

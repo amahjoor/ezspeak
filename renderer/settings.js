@@ -192,7 +192,8 @@ async function updateProviderUI(mode) {
 // Auto-save API key
 async function saveApiKey() {
     try {
-        const apiKey = document.getElementById('apiKey').value.trim();
+        // By this point the input listener has already stripped any whitespace
+        const apiKey = document.getElementById('apiKey').value;
 
         if (!apiKey) {
             return; // Field is empty — nothing to validate
@@ -500,10 +501,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-save API key on Enter or blur (when user clicks away)
     if (apiKeyInput) {
+        // Strip whitespace in real time so the user sees the clean value as they type/paste
+        apiKeyInput.addEventListener('input', () => {
+            const cleaned = apiKeyInput.value.replace(/\s/g, '');
+            if (cleaned !== apiKeyInput.value) {
+                apiKeyInput.value = cleaned;
+            }
+        });
+
         apiKeyInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 saveApiKey();
-                apiKeyInput.blur(); // Remove focus
+                apiKeyInput.blur();
             }
         });
 
