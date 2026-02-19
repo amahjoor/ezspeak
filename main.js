@@ -129,7 +129,7 @@ function updateTrayMenu() {
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 550,
+    height: 580,
     resizable: false,
     frame: false, // Remove default frame for custom title bar
     show: false, // Don't show window automatically - only show when explicitly called
@@ -256,6 +256,19 @@ async function handleRecordStop() {
       Logger.log('Auto-pasting text...');
       await ClipboardManager.autoPaste(transcribedText.trim());
       Logger.success('Text pasted successfully!');
+
+      // Save to history
+      Config.addToHistory(transcribedText.trim());
+      Logger.log('Transcription saved to history');
+
+      // Notify settings window so History tab stays live if it's open
+      if (settingsWindow && !settingsWindow.isDestroyed()) {
+        try {
+          settingsWindow.webContents.send('history-updated');
+        } catch (e) {
+          // Window may be in the middle of loading — ignore
+        }
+      }
     } else {
       Logger.warn('No text to paste (empty transcription)');
     }
@@ -364,6 +377,15 @@ ipcMain.on('minimize-window', () => {
 
 ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
+});
+
+ipcMain.handle('get-history', () => {
+  return Config.getHistory();
+});
+
+ipcMain.handle('clear-history', () => {
+  Config.clearHistory();
+  return true;
 });
 
 // App lifecycle

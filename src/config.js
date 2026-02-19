@@ -1,6 +1,8 @@
 const Store = require('electron-store');
 const os = require('os');
 
+const HISTORY_MAX = 50;
+
 const store = new Store({
   name: 'ezspeak-config',
   defaults: {
@@ -11,7 +13,8 @@ const store = new Store({
     sampleRate: 16000,
     channels: 1,
     bitDepth: 16,
-    transcriptionMode: 'online' // 'online' or 'offline'
+    transcriptionMode: 'online', // 'online' or 'offline'
+    transcriptionHistory: [] // Array of { id, text, timestamp } objects
   }
 });
 
@@ -76,6 +79,29 @@ class Config {
     }
     // If online mode, API key is required
     return this.getApiKey().length > 0;
+  }
+
+  // ─── Transcription history ───────────────────────────────────────
+
+  static getHistory() {
+    return store.get('transcriptionHistory', []);
+  }
+
+  static addToHistory(text) {
+    const history = this.getHistory();
+    const entry = {
+      id: Date.now().toString(),
+      text: text.trim(),
+      timestamp: new Date().toISOString()
+    };
+    // Prepend newest first, then cap at max
+    const updated = [entry, ...history].slice(0, HISTORY_MAX);
+    store.set('transcriptionHistory', updated);
+    return entry;
+  }
+
+  static clearHistory() {
+    store.set('transcriptionHistory', []);
   }
 }
 

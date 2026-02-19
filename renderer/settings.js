@@ -475,6 +475,141 @@ function setupModelDownload() {
 }
 
 
+// ─── Tab navigation ──────────────────────────────────────────────────────────
+function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panels = {
+        settings: document.getElementById('panel-settings'),
+        history: document.getElementById('panel-history')
+    };
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.tab;
+
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            Object.entries(panels).forEach(([key, panel]) => {
+                if (panel) panel.style.display = key === target ? 'flex' : 'none';
+            });
+
+            if (target === 'history') {
+                loadAndRenderHistory();
+            }
+        });
+    });
+}
+
+// ─── History feature ──────────────────────────────────────────────────────────
+function formatHistoryDate(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) return `Today at ${timeStr}`;
+    if (isYesterday) return `Yesterday at ${timeStr}`;
+
+    return date.toLocaleDateString([], {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    }) + ` at ${timeStr}`;
+}
+
+async function loadAndRenderHistory() {
+    const list = document.getElementById('historyList');
+    const empty = document.getElementById('historyEmpty');
+    const countEl = document.getElementById('historyCount');
+    if (!list) return;
+
+    let history = [];
+    try {
+        history = await window.electronAPI.getHistory();
+    } catch (e) {
+        console.error('Failed to load history:', e);
+    }
+
+    // Update count label
+    if (countEl) {
+        const n = history.length;
+        countEl.textContent = n === 1 ? '1 transcription' : `${n} transcriptions`;
+    }
+
+    // Remove any previously rendered entries (keep empty state node)
+    Array.from(list.querySelectorAll('.history-entry')).forEach(el => el.remove());
+
+    if (history.length === 0) {
+        if (empty) empty.style.display = 'flex';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    history.forEach(entry => {
+        const el = document.createElement('div');
+        el.className = 'history-entry';
+        el.dataset.id = entry.id;
+        el.innerHTML = `
+            <div class="history-entry-meta">
+                <span class="history-entry-date">${formatHistoryDate(entry.timestamp)}</span>
+                <span class="history-copy-hint">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                </span>
+            </div>
+            <div class="history-entry-text">${escapeHtml(entry.text)}</div>
+        `;
+
+        el.addEventListener('click', () => copyHistoryEntry(el, entry.text));
+        list.appendChild(el);
+    });
+}
+
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function copyHistoryEntry(el, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Visual flash
+        el.classList.add('flash');
+        setTimeout(() => el.classList.remove('flash'), 600);
+        showToast('Copied to clipboard');
+    }).catch(err => {
+        console.error('Clipboard write failed:', err);
+        showToast('Failed to copy', 'error');
+    });
+}
+
+function setupClearHistory() {
+    const btn = document.getElementById('clearHistoryBtn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        try {
+            await window.electronAPI.clearHistory();
+            await loadAndRenderHistory();
+            showToast('History cleared');
+        } catch (e) {
+            console.error('Failed to clear history:', e);
+            showToast('Failed to clear history', 'error');
+        }
+    });
+}
+
 // Setup auto-save for API key and microphone
 document.addEventListener('DOMContentLoaded', () => {
     const apiKeyInput = document.getElementById('apiKey');
@@ -482,6 +617,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup window controls
     setupWindowControls();
+
+    // Setup tabs (Settings / History)
+    setupTabs();
+
+    // Setup history clear button
+    setupClearHistory();
+
+    // Refresh history list live whenever a new transcription comes in
+    if (window.electronAPI.onHistoryUpdated) {
+        window.electronAPI.onHistoryUpdated(() => {
+            const historyPanel = document.getElementById('panel-history');
+            if (historyPanel && historyPanel.style.display !== 'none') {
+                loadAndRenderHistory();
+            }
+        });
+    }
 
     // Setup hotkey capture
     setupHotkeyCapture();

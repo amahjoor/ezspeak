@@ -15,6 +15,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeSettings: () => ipcRenderer.send('close-settings'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   openExternal: (url) => ipcRenderer.send('open-external', url),
+  // History
+  getHistory: () => ipcRenderer.invoke('get-history'),
+  clearHistory: () => ipcRenderer.invoke('clear-history'),
+  onHistoryUpdated: (callback) => {
+    ipcRenderer.on('history-updated', () => callback());
+  },
   onStatusUpdate: (callback) => {
     ipcRenderer.on('status-update', (event, status) => callback(status));
   },
@@ -31,4 +37,3 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('error', (event, message) => callback(message));
   }
 });
-
