@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import GitHubStars from '@/components/GitHubStars'
 import DownloadButton from '@/components/DownloadButton'
+import { HeroVideoDialog } from '@/components/HeroVideoDialog'
 
 export default function Home() {
   return (
@@ -23,16 +24,7 @@ export default function Home() {
             >
               Discord
             </a>
-            <div className="flex items-center group">
-              <a
-                href="https://github.com/amahjoor/ezspeak"
-                target="_blank"
-                className="text-gray-600 group-hover:text-gray-900 pl-3 pr-2 py-1.5 group-hover:bg-gray-100 rounded-l-md transition-colors"
-              >
-                GitHub
-              </a>
-              <GitHubStars />
-            </div>
+            <GitHubStars />
           </div>
         </nav>
       </header>
@@ -50,15 +42,8 @@ export default function Home() {
             Press a button, speak naturally, and watch your words appear instantly.
           </p>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center">
             <DownloadButton variant="primary" />
-            <a
-              href="https://github.com/amahjoor/ezspeak"
-              target="_blank"
-              className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold px-8 py-4 rounded-full transition-all"
-            >
-              View on GitHub
-            </a>
           </div>
 
           <p className="text-sm text-gray-500 mt-4">
@@ -70,15 +55,12 @@ export default function Home() {
       {/* Demo Video Section */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="aspect-video rounded-2xl shadow-2xl overflow-hidden">
-            <iframe
-              src="https://www.youtube.com/embed/e5Ah0JnQxB8?vq=hd1080"
-              title="ezspeak Demo Video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            ></iframe>
-          </div>
+          <HeroVideoDialog
+            animationStyle="from-center"
+            videoSrc="https://www.youtube.com/embed/e5Ah0JnQxB8?vq=hd1080"
+            thumbnailSrc="https://img.youtube.com/vi/e5Ah0JnQxB8/maxresdefault.jpg"
+            thumbnailAlt="ezspeak Demo Video"
+          />
         </div>
       </section>
 
@@ -380,7 +362,7 @@ export default function Home() {
                 <span className="font-bold text-white">ezspeak</span>
               </div>
               <span className="text-sm">
-                Made by{' '}
+                Created by{' '}
                 <a
                   href="https://mahjoor.com"
                   target="_blank"
