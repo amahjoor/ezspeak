@@ -1,11 +1,6 @@
 import Link from 'next/link'
 import GitHubStars from '@/components/GitHubStars'
-
-/**
- * GitHub download URL for the latest release
- * Update this value to change all download links across the website
- */
-const GITHUB_DOWNLOAD_URL = 'https://github.com/amahjoor/ezspeak/releases/download/v1.0.4/ezspeak.Setup.1.0.4.exe'
+import DownloadButton from '@/components/DownloadButton'
 
 export default function Home() {
   return (
@@ -20,7 +15,7 @@ export default function Home() {
             <span className="font-bold text-xl">ezspeak</span>
           </div>
           <div className="flex items-center gap-6">
-            <a href={GITHUB_DOWNLOAD_URL} className="text-gray-600 hover:text-gray-900">Download</a>
+            <DownloadButton variant="nav" />
             <a
               href="https://discord.gg/WmZrBBEpab"
               target="_blank"
@@ -70,12 +65,7 @@ export default function Home() {
           </p>
 
           <div className="flex items-center justify-center gap-4">
-            <a
-              href={GITHUB_DOWNLOAD_URL}
-              className="bg-[#6BB589] hover:bg-[#559f70] text-white font-semibold px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl"
-            >
-              Download ezspeak
-            </a>
+            <DownloadButton variant="primary" />
             <a
               href="https://github.com/amahjoor/ezspeak"
               target="_blank"
@@ -332,12 +322,7 @@ export default function Home() {
             Download ezspeak for Windows and start transcribing in minutes.
           </p>
 
-          <a
-            href={GITHUB_DOWNLOAD_URL}
-            className="inline-block bg-white text-[#6BB589] font-semibold px-10 py-5 rounded-full hover:shadow-2xl transition-all text-lg"
-          >
-            Download for Windows
-          </a>
+          <DownloadButton variant="inverse" />
 
           <p className="text-sm mt-6 opacity-75">
             Windows 10+ • Free forever
