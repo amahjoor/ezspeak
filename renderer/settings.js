@@ -295,7 +295,7 @@ function setupHotkeyCapture() {
 
         isCapturing = true;
         hotkeyInput.value = 'Press any key...';
-        hotkeyInput.style.borderColor = '#0078d4';
+        hotkeyInput.style.borderColor = '#6BB589';
         hotkeyInput.style.background = '#2d2d30';
         // Clear previous state for a new capture session
         pressedKeys.clear();

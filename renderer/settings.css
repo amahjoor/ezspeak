@@ -185,7 +185,7 @@ header h1 {
 }
 
 .tooltip a {
-    color: #4fc3f7 !important;
+    color: #6BB589 !important;
 }
 
 .help-text {
@@ -225,7 +225,7 @@ input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     outline: none;
-    border-color: #0078d4;
+    border-color: #6BB589;
     background: #2d2d30;
 }
 
@@ -381,7 +381,7 @@ kbd {
 
 .download-icon-box:hover {
     opacity: 1;
-    border-color: #0078d4;
+    border-color: #6BB589;
     background: #2d2d30;
 }
 
@@ -415,7 +415,7 @@ kbd {
 }
 
 #providerHelp a {
-    color: #4fc3f7;
+    color: #6BB589;
     text-decoration: none;
 }
 
@@ -455,7 +455,7 @@ kbd {
 
 .tab-btn.active {
     color: #ffffff;
-    border-bottom-color: #0078d4;
+    border-bottom-color: #6BB589;
 }
 
 /* ─── Tab panels ────────────────────────────────────────────────── */
@@ -557,8 +557,8 @@ kbd {
 
 /* Flash animation on copy */
 .history-entry.flash {
-    background: #1a3a52;
-    border-color: #0078d4;
+    background: #1a3a2a;
+    border-color: #6BB589;
 }
 
 .history-entry-meta {
