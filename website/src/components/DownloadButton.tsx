@@ -5,13 +5,15 @@ import { useState, useEffect, useRef } from 'react'
 const DOWNLOADS = {
   windows: {
     label: 'Windows',
+    version: 'v1.0.4',
     url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.0.4/ezspeak.Setup.1.0.4.exe',
     available: true,
   },
   mac: {
     label: 'macOS',
-    url: null,
-    available: false,
+    version: 'v1.1.0',
+    url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.1.0/ezspeak-1.1.0-arm64.dmg',
+    available: true,
   },
 } as const
 
@@ -73,6 +75,7 @@ export default function DownloadButton({ variant = 'primary' }: DownloadButtonPr
             className="text-gray-600 hover:text-gray-900 transition-colors"
           >
             Download
+            <span className="ml-1 text-xs text-gray-400">{primary.version}</span>
           </a>
         ) : (
           <span className="text-gray-400 cursor-not-allowed">Download</span>
@@ -105,7 +108,8 @@ export default function DownloadButton({ variant = 'primary' }: DownloadButtonPr
                 className="flex items-center gap-2 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <PlatformIcon platform={primaryPlatform} />
-                Download for {primary.label}
+                <span>Download for {primary.label}</span>
+                <span className="ml-auto pl-4 text-xs text-gray-400">{primary.version}</span>
               </a>
             )}
             {otherOptions.map(([key, opt]) =>
@@ -117,7 +121,8 @@ export default function DownloadButton({ variant = 'primary' }: DownloadButtonPr
                   className="flex items-center gap-2 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <PlatformIcon platform={key} />
-                  Download for {opt.label}
+                  <span>Download for {opt.label}</span>
+                  <span className="ml-auto pl-4 text-xs text-gray-400">{opt.version}</span>
                 </a>
               ) : (
                 <div
@@ -141,40 +146,43 @@ export default function DownloadButton({ variant = 'primary' }: DownloadButtonPr
       ? 'bg-[#6BB589] hover:bg-[#559f70] text-white'
       : 'bg-white text-[#6BB589] hover:bg-gray-50'
 
-  const mainButtonClass = `${mainButtonBase} font-semibold px-8 py-4 rounded-l-full transition-all shadow-lg hover:shadow-xl`
+  const mainButtonClass = `${mainButtonBase} font-semibold px-8 py-4 rounded-l-full transition-all shadow-lg hover:shadow-xl flex items-center gap-2`
   const chevronButtonClass = `${mainButtonBase} px-3 py-4 rounded-r-full transition-all shadow-lg hover:shadow-xl border-l ${
     variant === 'primary' ? 'border-[#559f70]' : 'border-[#6BB589]/20'
   } flex items-center`
 
   return (
     <div ref={containerRef} className="relative inline-flex">
-      {/* Main download button */}
-      {primary.available && primary.url ? (
-        <a href={primary.url} className={mainButtonClass}>
-          Download for {primary.label}
-        </a>
-      ) : (
-        <button disabled className={`${mainButtonClass} opacity-60 cursor-not-allowed`}>
-          {primary.label} — Coming Soon
-        </button>
-      )}
+      <div className="inline-flex">
+        {/* Main download button */}
+        {primary.available && primary.url ? (
+          <a href={primary.url} className={mainButtonClass}>
+            <span>Download for {primary.label}</span>
+            <span className={`text-xs font-normal ${variant === 'primary' ? 'text-white/60' : 'text-[#6BB589]/60'}`}>{primary.version}</span>
+          </a>
+        ) : (
+          <button disabled className={`${mainButtonClass} opacity-60 cursor-not-allowed`}>
+            <span>{primary.label} — Coming Soon</span>
+          </button>
+        )}
 
-      {/* Chevron toggle */}
-      <button
-        onClick={() => setOpen((prev: boolean) => !prev)}
-        className={chevronButtonClass}
-        aria-label="Other download options"
-        aria-expanded={open}
-      >
-        <svg
-          className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        {/* Chevron toggle */}
+        <button
+          onClick={() => setOpen((prev: boolean) => !prev)}
+          className={chevronButtonClass}
+          aria-label="Other download options"
+          aria-expanded={open}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <svg
+            className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
 
       {/* Dropdown */}
       {open && (
@@ -188,7 +196,8 @@ export default function DownloadButton({ variant = 'primary' }: DownloadButtonPr
                 className="flex items-center gap-2 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <PlatformIcon platform={key} />
-                Download for {opt.label}
+                <span>Download for {opt.label}</span>
+                <span className="ml-auto pl-4 text-xs text-gray-400">{opt.version}</span>
               </a>
             ) : (
               <div
