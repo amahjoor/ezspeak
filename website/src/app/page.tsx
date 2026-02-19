@@ -40,26 +40,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-4 mb-8 text-sm text-gray-600">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              Free & Open Source
-            </span>
-            <span>•</span>
-            <span>Windows 10+</span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              Local or Cloud
-            </span>
-          </div>
-
           <h1 className="text-6xl font-bold mb-6 leading-[1.15] py-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
             Speak, don&apos;t type
           </h1>
 
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Voice-to-text transcription for Windows. Choose local offline transcription
+            Voice-to-text transcription for any app. Choose local offline transcription
             for complete privacy, or use OpenAI Whisper for cloud processing.
             Press a button, speak naturally, and watch your words appear instantly.
           </p>
@@ -76,7 +62,7 @@ export default function Home() {
           </div>
 
           <p className="text-sm text-gray-500 mt-4">
-            Free forever • No account needed • Installs in seconds
+            Free forever • No account needed • Local or cloud
           </p>
         </div>
       </section>
@@ -143,7 +129,7 @@ export default function Home() {
               <h3 className="text-xl font-semibold mb-2">Auto-Paste</h3>
               <p className="text-gray-600">
                 Transcribed text automatically pastes at your cursor location.
-                Works in any Windows app - browsers, Word, Slack, anywhere.
+                Works in any app - browsers, Word, Slack, anywhere.
               </p>
             </div>
 
@@ -319,13 +305,13 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="text-4xl font-bold mb-4">Ready to speak instead of type?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Download ezspeak for Windows and start transcribing in minutes.
+            Download ezspeak and start transcribing in minutes.
           </p>
 
           <DownloadButton variant="inverse" />
 
           <p className="text-sm mt-6 opacity-75">
-            Windows 10+ • Free forever
+            Free forever • Open source
           </p>
         </div>
       </section>
@@ -335,64 +321,49 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-16">Frequently asked questions</h2>
 
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Is ezspeak really free?</h3>
-              <p className="text-gray-600">
-                Yes! ezspeak is free and open source. You only pay for API usage when using
-                cloud transcription services, which is typically very affordable.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Do I need any accounts?</h3>
-              <p className="text-gray-600">
-                No accounts needed for local transcription - it works completely offline.
-                If you want to use cloud APIs for transcription, you&apos;ll need to create
-                an account with your preferred service provider.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Is my voice data private?</h3>
-              <p className="text-gray-600">
-                With local transcription, your audio never leaves your computer. When using cloud
-                services, audio is processed and immediately deleted. We do not store or use your data.
-                API keys (when used) are stored locally and encrypted.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Which apps does ezspeak work with?</h3>
-              <p className="text-gray-600">
-                ezspeak works with any Windows application that accepts text input: web browsers,
-                Microsoft Word, Slack, Discord, email clients, code editors, and more.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">What languages are supported?</h3>
-              <p className="text-gray-600">
-                ezspeak supports over 50 languages including English, Spanish, French, German,
-                Chinese, Japanese, and many more through both local and cloud transcription options.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Can I customize the hotkey?</h3>
-              <p className="text-gray-600">
-                Absolutely! You can set any key as your recording hotkey. The default is Right Ctrl,
-                but you can change it to any function key or modifier key you prefer.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Do I need internet for local transcription?</h3>
-              <p className="text-gray-600">
-                No! Local transcription works completely offline. The AI model is downloaded
-                once and stored on your computer. You only need internet to download the model initially.
-              </p>
-            </div>
+          <div className="divide-y divide-gray-200 border-t border-b border-gray-200">
+            {[
+              {
+                q: "Is ezspeak really free?",
+                a: "Yes! ezspeak is free and open source. You only pay for API usage when using cloud transcription services, which is typically very affordable."
+              },
+              {
+                q: "Do I need any accounts?",
+                a: "No accounts needed for local transcription - it works completely offline. If you want to use cloud APIs for transcription, you'll need to create an account with your preferred service provider."
+              },
+              {
+                q: "Is my voice data private?",
+                a: "With local transcription, your audio never leaves your computer. When using cloud services, audio is processed and immediately deleted. We do not store or use your data. API keys (when used) are stored locally and encrypted."
+              },
+              {
+                q: "Which apps does ezspeak work with?",
+                a: "ezspeak works with any application that accepts text input: web browsers, Microsoft Word, Slack, Discord, email clients, code editors, and more."
+              },
+              {
+                q: "What languages are supported?",
+                a: "ezspeak supports over 50 languages including English, Spanish, French, German, Chinese, Japanese, and many more through both local and cloud transcription options."
+              },
+              {
+                q: "Can I customize the hotkey?",
+                a: "Absolutely! You can set any key as your recording hotkey. The default is Right Ctrl, but you can change it to any function key or modifier key you prefer."
+              },
+              {
+                q: "Do I need internet for local transcription?",
+                a: "No! Local transcription works completely offline. The AI model is downloaded once and stored on your computer. You only need internet to download the model initially."
+              },
+            ].map(({ q, a }) => (
+              <details key={q} className="group py-5">
+                <summary className="flex cursor-pointer items-center justify-between gap-4 text-xl font-semibold list-none">
+                  {q}
+                  <span className="ml-4 flex-shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </span>
+                </summary>
+                <p className="mt-3 text-gray-600">{a}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
