@@ -27,13 +27,13 @@ function createRecordingIndicator() {
   // Use the display where the user's cursor is, not necessarily the primary
   const cursorPos = screen.getCursorScreenPoint();
   const activeDisplay = screen.getDisplayNearestPoint(cursorPos);
-  const { x: displayX, y: displayY, width } = activeDisplay.bounds;
+  const { x: displayX, y: displayY, width, height: displayHeight } = activeDisplay.bounds;
 
   recordingIndicator = new BrowserWindow({
     width: 180,
-    height: 50,
+    height: 64,
     x: Math.floor(displayX + width / 2 - 90), // Center on active display
-    y: displayY + 20, // 20px from top of active display
+    y: displayY + displayHeight - 90, // 90px from bottom of active display
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -65,10 +65,10 @@ function showRecordingIndicator() {
     const { screen } = require('electron');
     const cursorPos = screen.getCursorScreenPoint();
     const activeDisplay = screen.getDisplayNearestPoint(cursorPos);
-    const { x: displayX, y: displayY, width } = activeDisplay.bounds;
+    const { x: displayX, y: displayY, width, height: displayHeight } = activeDisplay.bounds;
     recordingIndicator.setPosition(
       Math.floor(displayX + width / 2 - 90),
-      displayY + 20
+      displayY + displayHeight - 90
     );
     recordingIndicator.showInactive(); // Show without stealing focus
     // Trigger timer reset
@@ -403,6 +403,15 @@ ipcMain.on('minimize-window', () => {
 
 ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
+});
+
+// Forward live waveform data from the settings window to the recording indicator
+ipcMain.on('waveform-data', (event, data) => {
+  if (recordingIndicator && !recordingIndicator.isDestroyed()) {
+    recordingIndicator.webContents.executeJavaScript(
+      `if (typeof updateWaveform === 'function') updateWaveform(${JSON.stringify(data)})`
+    );
+  }
 });
 
 ipcMain.handle('get-history', () => {

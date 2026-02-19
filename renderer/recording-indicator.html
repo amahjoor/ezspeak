@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
             margin: 0;
@@ -13,180 +14,210 @@
         body {
             background: transparent;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             -webkit-app-region: drag;
-        }
-
-        .recording-indicator {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-            color: white;
-            padding: 12px 12px;
-            /* Reduced from 20px */
-            border-radius: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Center content */
-            gap: 4px;
-            /* Reduced from 6px */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease-out;
-            transition: background 0.3s ease;
-            width: 100%;
-            /* Ensure full width for centering */
+            width: 180px;
+            height: 64px;
         }
 
-        .recording-indicator.transcribing {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        #waveCanvas {
+            display: block;
+            /* Logical CSS size — actual pixel buffer is scaled by DPR in JS */
+            width: 160px;
+            height: 44px;
         }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-100px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .pulse {
-            width: 8px;
-            /* Slightly smaller pulse dot */
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            animation: pulse 1.5s ease-in-out infinite;
-            flex-shrink: 0;
-            /* Prevent dot from shrinking */
-        }
-
-        .recording-indicator.transcribing .pulse {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.2);
-                opacity: 0.7;
-            }
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg) scale(1);
-            }
-
-            50% {
-                transform: rotate(180deg) scale(0.8);
-            }
-
-            100% {
-                transform: rotate(360deg) scale(1);
-            }
-        }
-
-        .text {
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            /* Prevent text wrapping */
-        }
-
-        .duration {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-left: 0;
-            /* Removed extra margin */
-        }
-
-        /* Mic icon style removed */
     </style>
 </head>
 
 <body>
-    <div class="recording-indicator" id="indicator">
-        <!-- Icon removed -->
-        <div class="pulse"></div>
-        <span class="text" id="statusText">Recording...</span>
-        <span class="duration" id="duration">0s</span>
-    </div>
-    <script>
-        let startTime = null;
-        let timerInterval = null;
-        let transcribeStartTime = null;
+    <canvas id="waveCanvas"></canvas>
 
-        function resetTimer() {
-            startTime = Date.now();
-            document.getElementById('duration').textContent = '0s';
+    <script>
+        // ── Logical dimensions (CSS / drawing coords) ─────────────────────────
+        const W = 160;
+        const H = 44;
+
+        const canvas = document.getElementById('waveCanvas');
+        const ctx    = canvas.getContext('2d');
+
+        // Scale the backing buffer for the screen's pixel density
+        const DPR = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(W * DPR);
+        canvas.height = Math.round(H * DPR);
+        ctx.scale(DPR, DPR);
+
+        // ── State ─────────────────────────────────────────────────────────────
+        let mode     = 'recording'; // 'recording' | 'transcribing'
+        let liveData = null;        // plain array from mic AnalyserNode
+
+        // Timer state (kept for API compat; not rendered visually)
+        let startTime      = null;
+        let timerInterval  = null;
+        let transcribeStart = null;
+        let elapsedSecs    = 0;
+
+        // ── Bar config (in logical px) ────────────────────────────────────────
+        const BAR_COUNT  = 5;
+        const BAR_W      = 3;
+        const BAR_GAP    = 5;
+        const BAR_MIN_H  = 3;
+        const BAR_MAX_H  = 22;
+        const BAR_R      = 1.5;
+        const TOTAL_BARS_W = BAR_COUNT * BAR_W + (BAR_COUNT - 1) * BAR_GAP;
+        const BARS_X     = (W - TOTAL_BARS_W) / 2;
+        const BARS_Y     = H / 2;
+
+        // Per-bar smoothed heights
+        const smoothed = new Array(BAR_COUNT).fill(BAR_MIN_H);
+
+        // ── Draw loop ─────────────────────────────────────────────────────────
+        function drawFrame(timestamp) {
+            ctx.clearRect(0, 0, W, H);
+            drawPill();
+            updateBars(timestamp);
+            drawBars();
+            requestAnimationFrame(drawFrame);
+        }
+
+        // ── Pill background ───────────────────────────────────────────────────
+        function drawPill() {
+            const r = H / 2;
+
+            // Fill
+            ctx.beginPath();
+            pillPath(0, 0, W, H, r);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+            ctx.fill();
+
+            // Hair-line border
+            ctx.beginPath();
+            pillPath(0.5, 0.5, W - 1, H - 1, r - 0.5);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.07)';
+            ctx.lineWidth   = 0.5;
+            ctx.stroke();
+        }
+
+        function pillPath(x, y, w, h, r) {
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.arcTo(x + w, y,     x + w, y + r,     r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+            ctx.lineTo(x + r, y + h);
+            ctx.arcTo(x,     y + h, x,     y + h - r, r);
+            ctx.lineTo(x,    y + r);
+            ctx.arcTo(x,     y,     x + r, y,         r);
+            ctx.closePath();
+        }
+
+        // ── Bar animation ─────────────────────────────────────────────────────
+        function updateBars(timestamp) {
+            if (mode === 'recording') {
+                if (liveData && liveData.length > 0) {
+                    const bucketSize = Math.floor(liveData.length / BAR_COUNT);
+                    for (let i = 0; i < BAR_COUNT; i++) {
+                        let sum = 0;
+                        const offset = i * bucketSize;
+                        for (let j = 0; j < bucketSize; j++) {
+                            sum += Math.abs((liveData[offset + j] / 128.0) - 1.0);
+                        }
+                        const avg    = sum / bucketSize;
+                        const target = Math.min(BAR_MIN_H + avg * (BAR_MAX_H - BAR_MIN_H) * 6.0, BAR_MAX_H);
+                        // Smooth rise and fall — fluid, not snappy
+                        const alpha  = target > smoothed[i] ? 0.25 : 0.12;
+                        smoothed[i] += alpha * (target - smoothed[i]);
+                    }
+                } else {
+                    // Waiting for first data — very gentle idle breathe
+                    const breath = BAR_MIN_H + (Math.sin(timestamp / 700) * 0.5 + 0.5) * 3;
+                    for (let i = 0; i < BAR_COUNT; i++) {
+                        smoothed[i] += 0.04 * (breath - smoothed[i]);
+                    }
+                }
+            } else {
+                // Transcribing — slow travelling sine wave across bars
+                for (let i = 0; i < BAR_COUNT; i++) {
+                    const phase  = (i / (BAR_COUNT - 1)) * Math.PI * 2 - timestamp / 950;
+                    const target = BAR_MIN_H + (Math.sin(phase) * 0.5 + 0.5) * 10;
+                    smoothed[i] += 0.07 * (target - smoothed[i]);
+                }
+            }
+        }
+
+        function drawBars() {
+            const color = mode === 'recording' ? '#6BB589' : '#ADADAD';
+
+            for (let i = 0; i < BAR_COUNT; i++) {
+                const bh = smoothed[i];
+                const x  = BARS_X + i * (BAR_W + BAR_GAP);
+                const y  = BARS_Y - bh / 2;
+
+                ctx.beginPath();
+                barPath(x, y, BAR_W, bh, BAR_R);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
+
+        function barPath(x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.moveTo(x + rr, y);
+            ctx.lineTo(x + w - rr, y);
+            ctx.arcTo(x + w, y,     x + w, y + rr,     rr);
+            ctx.lineTo(x + w, y + h - rr);
+            ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+            ctx.lineTo(x + rr, y + h);
+            ctx.arcTo(x,     y + h, x,     y + h - rr, rr);
+            ctx.lineTo(x,    y + rr);
+            ctx.arcTo(x,     y,     x + rr, y,         rr);
+            ctx.closePath();
+        }
+
+        // ── Public API (called via executeJavaScript from main.js) ────────────
+
+        function updateWaveform(data) {
+            liveData = data;
         }
 
         function startTimer() {
-            resetTimer();
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
+            mode      = 'recording';
+            liveData  = null;
+            startTime = Date.now();
+            elapsedSecs = 0;
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                document.getElementById('duration').textContent = elapsed + 's';
-            }, 100);
+                elapsedSecs = Math.floor((Date.now() - startTime) / 1000);
+            }, 200);
         }
 
         function stopTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         }
 
-        // Switch to transcribing mode - continues timer from where recording left off
         function setTranscribingMode() {
-            const indicator = document.getElementById('indicator');
-            const statusText = document.getElementById('statusText');
-
-            indicator.classList.add('transcribing');
-            // Icon update removed
-            statusText.textContent = 'Transcribing...';
-
-            // Reset timer for transcription phase
-            transcribeStartTime = Date.now();
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
+            mode           = 'transcribing';
+            liveData       = null;
+            transcribeStart = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - transcribeStartTime) / 1000);
-                document.getElementById('duration').textContent = elapsed + 's';
-            }, 100);
+                elapsedSecs = Math.floor((Date.now() - transcribeStart) / 1000);
+            }, 200);
         }
 
-        // Reset to recording mode
         function setRecordingMode() {
-            const indicator = document.getElementById('indicator');
-            const statusText = document.getElementById('statusText');
-
-            indicator.classList.remove('transcribing');
-            // Icon update removed
-            statusText.textContent = 'Recording...';
+            mode        = 'recording';
+            liveData    = null;
+            elapsedSecs = 0;
         }
 
-        // Listen for visibility changes to start/stop timer
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopTimer();
-            } else {
-                startTimer();
-            }
+            if (document.hidden) stopTimer(); else startTimer();
         });
+
+        // Kick off render loop
+        requestAnimationFrame(drawFrame);
     </script>
 </body>
 
