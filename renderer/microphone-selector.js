@@ -55,22 +55,15 @@ if (document.readyState === 'loading') {
     loadMicrophones();
 }
 
-// Setup auto-refresh on dropdown interaction and device changes
+// Setup auto-refresh on device changes only (not on focus/click — rebuilding
+// options while the native macOS dropdown is open closes it immediately)
 document.addEventListener('DOMContentLoaded', () => {
-    const micSelect = document.getElementById('microphone');
-    
-    if (micSelect) {
-        // Refresh when user clicks/focuses the dropdown
-        micSelect.addEventListener('focus', loadMicrophones);
-        micSelect.addEventListener('click', loadMicrophones);
-        
-        // Auto-refresh when devices are plugged/unplugged
-        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-            navigator.mediaDevices.addEventListener('devicechange', () => {
-                console.log('Device change detected, refreshing microphones...');
-                loadMicrophones();
-            });
-        }
+    // Auto-refresh when devices are plugged/unplugged
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+            console.log('Device change detected, refreshing microphones...');
+            loadMicrophones();
+        });
     }
 });
 
