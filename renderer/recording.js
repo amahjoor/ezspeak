@@ -2,6 +2,8 @@
 let mediaRecorder = null;
 let audioChunks = [];
 let audioStream = null;
+let waveformAudioCtx = null;
+let waveformInterval = null;
 
 async function startRecording() {
   try {
@@ -79,6 +81,25 @@ async function startRecording() {
     };
 
     mediaRecorder.start(100);
+
+    // Wire up AnalyserNode on the same stream for live waveform visualization
+    try {
+      waveformAudioCtx = new AudioContext();
+      const source = waveformAudioCtx.createMediaStreamSource(audioStream);
+      const analyser = waveformAudioCtx.createAnalyser();
+      analyser.fftSize = 1024; // more data points = smoother buckets
+      analyser.smoothingTimeConstant = 0.6;
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      waveformInterval = setInterval(() => {
+        analyser.getByteTimeDomainData(dataArray);
+        window.electronAPI.sendWaveformData(Array.from(dataArray));
+      }, 33); // ~30fps
+    } catch (err) {
+      console.warn('Waveform analyser setup failed (non-critical):', err);
+    }
+
   } catch (error) {
     console.error('Recording error:', error);
     window.electronAPI.sendAudioError(error.message);
@@ -86,6 +107,15 @@ async function startRecording() {
 }
 
 function stopRecording() {
+  // Stop the waveform sampler
+  if (waveformInterval) {
+    clearInterval(waveformInterval);
+    waveformInterval = null;
+  }
+  if (waveformAudioCtx) {
+    waveformAudioCtx.close().catch(() => {});
+    waveformAudioCtx = null;
+  }
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop();
   }

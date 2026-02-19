@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Audio recording IPC
   sendAudioData: (buffer) => ipcRenderer.send('audio-recorded', buffer),
   sendAudioError: (error) => ipcRenderer.send('audio-error', error),
+  sendWaveformData: (data) => ipcRenderer.send('waveform-data', data),
   onStartRecording: (callback) => {
     ipcRenderer.on('start-recording', callback);
   },
