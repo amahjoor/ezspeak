@@ -1,6 +1,6 @@
 {
   "name": "ezspeak",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Voice-to-text transcription with global hotkey activation",
   "main": "main.js",
   "scripts": {
