@@ -11,8 +11,8 @@ const DOWNLOADS = {
   },
   mac: {
     label: 'macOS',
-    version: 'v1.1.0',
-    url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.1.0/ezspeak-1.1.0-arm64.dmg',
+    version: 'v1.1.1',
+    url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.1.1/ezspeak-1.1.1-arm64.dmg',
     available: true,
   },
 } as const
