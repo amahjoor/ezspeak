@@ -5,8 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 const DOWNLOADS = {
   windows: {
     label: 'Windows',
-    version: 'v1.0.4',
-    url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.0.4/ezspeak.Setup.1.0.4.exe',
+    version: 'v1.1.1',
+    url: 'https://github.com/amahjoor/ezspeak/releases/download/v1.1.1/ezspeak.Setup.1.1.1.exe',
     available: true,
   },
   mac: {
